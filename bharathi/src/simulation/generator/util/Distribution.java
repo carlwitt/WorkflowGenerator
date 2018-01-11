@@ -1,5 +1,7 @@
 package simulation.generator.util;
 
+import java.util.Random;
+
 /**
  * @author Shishir Bharathi
  */
@@ -58,7 +60,9 @@ class TruncatedNormalDistribution extends Distribution {
         this.scalingFactor = scalingFactor;
     }
 
+    Random random = new Random(1L);
     public double getDouble() {
+//        return Math.max(1, scalingFactor * random.nextGaussian() + mean * scalingFactor);
         return Misc.truncatedNormal(mean * scalingFactor, variance * scalingFactor * scalingFactor);
     }
 }

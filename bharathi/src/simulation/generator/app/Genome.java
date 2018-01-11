@@ -335,6 +335,20 @@ public class Genome extends AbstractApplication {
         this.distributions.put("pileup_factor", Distribution.getUniformDistribution(0.0, 10.0));
         this.distributions.put("pileup_rate", Distribution.getTruncatedNormalDistribution(881356.45, 8956444331.45));
     }
+
+    @Override
+    public String[] getTasktypes() {
+        return new String[]{
+                "Fast2Bfq",
+                "FastQSplit",
+                "FilterContams",
+                "MapMerge",
+                "MaqIndex",
+                "MaqMap",
+                "PileUp",
+                "Sol2Sanger",
+        };
+    }
 }
 
 class FastQSplit extends AppJob {

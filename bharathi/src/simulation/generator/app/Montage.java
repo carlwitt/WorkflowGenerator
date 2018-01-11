@@ -303,6 +303,21 @@ public class Montage extends AbstractApplication {
 
         this.distributions.put("mJPEG_rate", Distribution.getTruncatedNormalDistribution(549291.00, 3933630100.67));
     }
+
+    @Override
+    public String[] getTasktypes() {
+        return new String[]{
+                "MAdd",
+                "MBackground",
+                "MBgModel",
+                "MConcatFit",
+                "MDiffFit",
+                "MImgTbl",
+                "MJPEG",
+                "MProjectPP",
+                "MShrink",
+        };
+    }
 }
 
 class MProjectPP extends AppJob {

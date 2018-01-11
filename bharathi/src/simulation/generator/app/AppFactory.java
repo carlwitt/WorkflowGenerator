@@ -14,7 +14,7 @@ public class AppFactory {
         appMap.put("Ligo", new Ligo());
         appMap.put("GENOME", new Genome());
         appMap.put("MONTAGE", new Montage());
-        appMap.put("SIPHT", new SIPHT());
+        appMap.put("Sipht", new Sipht());
         appMap.put("CYBERSHAKE", new Cybershake());
     }
     

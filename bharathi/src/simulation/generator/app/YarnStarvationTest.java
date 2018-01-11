@@ -1,16 +1,5 @@
 package simulation.generator.app;
 
-import gnu.getopt.Getopt;
-import gnu.getopt.LongOpt;
-import simulation.generator.util.Distribution;
-import simulation.generator.util.MemoryModel;
-import simulation.generator.util.Misc;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
-
 /**
  *
  * A workflow to experiment with the YARN scheduler. The question is whether large resource requests (max memory allocation size)
@@ -93,6 +82,12 @@ public class YarnStarvationTest extends AbstractApplication {
 
     @Override
     protected void populateDistributions() {
+    }
+
+    @Override
+    public String[] getTasktypes() {
+        // we don't use this workflow with synthetic resource usage, so
+        return new String[0];
     }
 }
 

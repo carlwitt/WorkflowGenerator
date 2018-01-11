@@ -1,21 +1,24 @@
 package simulation.generator;
 
+import org.griphyn.cPlanner.code.generator.Abstract;
 import org.griphyn.vdl.dax.Job;
 import org.junit.jupiter.api.Test;
 import simulation.generator.app.*;
+import simulation.generator.util.LinearModel;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Created by Carl Witt on 03.11.17.
  *
  * The dax.new2 format added relative time to failure values (I think).
  * The dax.new3 format switched from a uniform error model to a normally distributed error model.
+ * The workflows in random-memory-models/ employ
  *
  */
 class AppGeneratorTest {
@@ -67,7 +70,7 @@ class AppGeneratorTest {
 
     @Test
     void generateSipht() throws Exception{
-        SIPHT sipht = new SIPHT();
+        Sipht sipht = new Sipht();
         sipht.generateWorkflow("-n", "400");
         sipht.printWorkflow(System.out);
 
@@ -75,58 +78,75 @@ class AppGeneratorTest {
     @Test
     void generateWorkflows() throws Exception {
 
-        String targetDir = "results/new4/";
+        Path targetDir = Paths.get("results", "random-memory-models");
 
         // avoid mixing up commas and dots when converting floating points to string (german vs. english locales)
         Locale.setDefault(new Locale("EN_us")); //Locale.setDefault();//setDefault(new Locale());
 
-        AbstractApplication[] applications = {
-                new Cybershake(),
-                new Ligo(),
-//                new Montage(),
-//                new SIPHT(),
+        // workflow classes
+        List<Class<? extends AbstractApplication>> applicationClasses = new LinkedList<>();
+        applicationClasses.add(Cybershake.class);
+//        applicationClasses.add(Genome.class);
+//        applicationClasses.add(Ligo.class);
+//        applicationClasses.add(Montage.class);
+//        applicationClasses.add(Sipht.class);
+
+        // tasks per workflow instance
+        int[] workflowSizes = {
+//                500,
+                1000,
+//                2000,
         };
 
-        // contains the csv line per workflow file
-        StringBuffer workflowStatisticsCsv = new StringBuffer();
-        workflowStatisticsCsv.append("file,num_tasks,total_runtime_seconds,total_spacetime_megabyteseconds,minimum_peak_memory_mb,maximum_peak_memory_mb\n");
+        // number of workflow instances per configuration (class, num tasks)
+        // since each workflow has randomized runtimes, memory consumptions, etc. we want
+        // more than one instance per configuration
+        int numInstances = 2;
 
+        // create a new application for each configuration (workflow type, num tasks, instance id)
+        List<AbstractApplication> applications = new LinkedList<>();
+        for(Class<? extends AbstractApplication> appClass : applicationClasses){
+            for (Integer numTasks : workflowSizes) {
+                for (int j = 0; j < numInstances; j++) {
+                    // create a new Ligo/Cybershake/etc. object
+                    AbstractApplication e = appClass.newInstance();
 
-        for(Integer numTasks : new int[]{50,500,600,800,1000,2000}) {
-            for (AbstractApplication app : applications) {
+                    // sample memory model parameters
+                    for(String tasktype : e.getTasktypes()){
+                        double slope = Math.random() * 10;
+                        double intercept = Math.random() * 24e9;
+                        double errorStandardDeviation = Math.random() * 10e9;
+                        System.out.printf("mem(%s) = %sx + %s + N(0, %s) in MEGA%n", tasktype, slope/1e6, intercept/1e6, errorStandardDeviation/1e6);
+                        e.memoryModels.put(tasktype, new LinearModel(slope, intercept, errorStandardDeviation, 10e6));
+                    }
 
-                // generate dax
-                app.generateWorkflow("-n", numTasks.toString());
-
-                AbstractApplication.WorkflowStatistics statistics = app.getStatistics();
-
-                // write to text file
-                String filename = String.format("%s.n.%d.0.dax.new3", app.getClass().getSimpleName(), statistics.numberOfTasks);
-                FileOutputStream fop = new FileOutputStream(new File(targetDir +filename));
-                app.printWorkflow(fop);
-                fop.close();
-
-                workflowStatisticsCsv.append(String.format("%s,%s,%s,%s,%s,%s\n",filename, statistics.numberOfTasks, statistics.totalRuntimeSeconds, statistics.totalSpacetimeMegabyteSeconds, 1e-6*statistics.minimumPeakMemory, 1e-6*statistics.maximumPeakMemoryBytes));
-
-                // write out memory distributions
-//                if(numTasks==2000){
-//                    FileWriter fileWriter = new FileWriter("evaluation/sampled-peak-mem-"+app.getClass().getSimpleName()+".csv");
-//
-//                    Iterable iterable = app.getDAX()::iterateJob;
-//                    Stream<AppJob> targetStream = StreamSupport.stream(iterable.spliterator(), false);
-//                    fileWriter.write(String.format("task_type,input_size_total_bytes,peak_mem_bytes\n"));
-//                    targetStream.forEach(j -> {
-//                        try {
-//                            fileWriter.write(String.format("%s,%s,%s%n",j.getName(),j.getAnnotation("input_total_bytes"),j.getAnnotation("peak_mem_bytes")));
-//                        } catch (IOException e) {
-//                            e.printStackTrace();
-//                        }
-//                    });
-//                    fileWriter.close();
-//                }
+                    // create the workflow topology and sample their resource requirements
+                    e.generateWorkflow("-n", numTasks.toString());
+                    applications.add(e);
+                }
             }
         }
-        Files.write(Paths.get(targetDir+"/workflowStatistics.csv"), workflowStatisticsCsv.toString().getBytes());
+
+
+        int instance = 0;
+        for (AbstractApplication app : applications) {
+
+            WorkflowStatistics statistics = app.getStatistics();
+
+            // write the workflow to text file (DAX format)
+            String filename = String.format("%s.n.%d.%d.dax", app.getClass().getSimpleName(), statistics.numberOfTasks, instance);
+            FileOutputStream fop = new FileOutputStream(new File(targetDir.resolve(filename).toString()));
+            app.printWorkflow(fop);
+            fop.close();
+
+            // add statistics for output in a file that describes the workflows
+            WorkflowStatistics.addStatistics(filename, statistics);
+            instance = (instance+1)%numInstances;
+
+        }
+
+        // write summary file that describes all generated workflows (e.g., their number of tasks, memory models, etc.)
+        WorkflowStatistics.writeStatisticsCSV(targetDir.resolve("workflowStatistics.csv").toString());
     }
 
 

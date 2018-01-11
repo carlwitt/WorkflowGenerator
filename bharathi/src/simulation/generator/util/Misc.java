@@ -10,7 +10,7 @@ import java.util.Random;
 public class Misc {
 
     private static final Random random;
-    private static final int MAX_TRIES = 100;
+    private static final int MAX_TRIES = 10000;
     
     static {
         random = new Random(129039123023L);
@@ -327,7 +327,7 @@ public class Misc {
     }
 
     public static double truncatedNormal(double mean, double variance) {
-        return truncatedNormal(mean, variance, 0.5);
+        return truncatedNormal(mean, variance, 0.99);
     }
 
     /**
@@ -346,10 +346,13 @@ public class Misc {
          * Try a limited (100) number of times to generate a suitable rv. If
          * this fails, return mean.
          */
-        for (int i = 0; i < 100; i++) {
+//      for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 10000; i++) {
             temp = random.nextGaussian();
             temp = temp * stddev + mean;
-            if (Math.abs(mean - temp) <= tolerance * mean) {
+//          if (Math.abs(mean - temp) <= tolerance * mean) {
+            // why limit the value from above? avoiding negative values seems sufficient
+            if (temp > (1.-tolerance)*mean) {
                 return temp;
             }
         }

@@ -38,9 +38,9 @@ class RunAll {
         run(new Ligo(), new File("Inspiral_100.xml"), "-n", "100");
         run(new Ligo(), new File("Inspiral_1000.xml"), "-n", "1000");
         
-        run(new SIPHT(), new File("Sipht_30.xml"), "-n", "30");
-        run(new SIPHT(), new File("Sipht_60.xml"), "-n", "60");
-        run(new SIPHT(), new File("Sipht_100.xml"), "-n", "100");
-        run(new SIPHT(), new File("Sipht_1000.xml"), "-n", "1000");
+        run(new Sipht(), new File("Sipht_30.xml"), "-n", "30");
+        run(new Sipht(), new File("Sipht_60.xml"), "-n", "60");
+        run(new Sipht(), new File("Sipht_100.xml"), "-n", "100");
+        run(new Sipht(), new File("Sipht_1000.xml"), "-n", "1000");
     }
 }
