@@ -1,8 +1,9 @@
-/*******************************************************************************
+/*
+* ******************************************************************************
  * In the Hi-WAY project we propose a novel approach of executing scientific
  * workflows processing Big Data, as found in NGS applications, on distributed
  * computational infrastructures. The Hi-WAY software stack comprises the func-
- * tional workflow language Cuneiform as well as the Hi-WAY ApplicationMaster
+ *  tional workflow language Cuneiform as well as the Hi-WAY ApplicationMaster
  * for Apache Hadoop 2.x (YARN).
  *
  * List of Contributors:
@@ -49,33 +50,32 @@ import java.util.stream.DoubleStream;
 public class LinearModel {
 
     /** The slope of the linear function. */
-    final double slope;
+    private final double slope;
     /** The axis intercept of the linear function. */
-    final double intercept;
+    private final double intercept;
     /** The random number generator used to generate the unexplained variation of the peak memory consumption (as opposed to the explained variation by the input file size). */
-    Random error;
+    private static Random error = new Random(129831239L);
     /** The standard deviation of the error that is added to the linear model.*/
-    double errorStandardDeviation;
+    private double errorStandardDeviation;
     /** The smallest number ever returned by this model, for instance to assure drawing positive random numbers. */
-    double minValue = Double.MIN_VALUE;
+    private double minValue = Double.MIN_VALUE;
 
-    /** Pairs of (total file input size, peak memory consumption) generated in {@link #randomMemoryModel(int, double, double)}.
+    /** Pairs of (total file input size, peak memory consumption) generated in {@link #randomMemoryModel(int, double, double, double, double, double)}}.
      * The samples[0] is the array of input sizes, samples[1] is the array of peak memory usages. */
-    double[][] samples = new double[2][];
+    private double[][] samples = new double[2][];
 
     /**
      * peak mem will be sampled from slope * input size + intercept + random value in range [-err, +err]
      * @param slope The slope of the linear function.
      * @param intercept The axis intercept of the linear function.
      * @param errorStandardDeviation The standard deviation of the (zero mean) error added to the linear model.
-     * @param minValue
+     * @param minValue when randomly generating a smaller value than minValue, minValue is returned instead
      */
     public LinearModel(double slope, double intercept, double errorStandardDeviation, double minValue) {
         this.slope = slope;
         this.intercept = intercept;
         this.errorStandardDeviation = errorStandardDeviation;
         this.minValue = minValue;
-        error = new Random();
     }
 
     public static LinearModel constant(double value, double errorStandardDeviation, double minValue){
@@ -83,13 +83,10 @@ public class LinearModel {
     }
 
     /**
-     *
-     * @return
+     * @return an array of random input sizes and possibly correlated memory consumption, depending on the parameters generated in {@link #randomMemoryModel(int, double, double, double, double, double)}
      */
     public double[][] getSamples(){
-
         return samples;
-
     }
 
     @Override
@@ -120,8 +117,6 @@ public class LinearModel {
         double meanY = uniform(100e6, 8e9);
         // standard deviation between 3% and 10% of the mean (seems low, but produces realistic feeling models; otherwise we get very large memory ranges)
         double varY = Math.pow(meanY * uniform(0.03, 0.1), 2.0);
-//        System.out.println("meanY = " + meanY);
-//        System.out.println("3sig = " + Math.sqrt(varY)*3.);
         // zero slope in half of the cases, between 0.5 and 2 in the rest
         double slope = Math.random() > linearTaskChance ? 0. : uniform(minSlope, maxSlope);
         double intercept;

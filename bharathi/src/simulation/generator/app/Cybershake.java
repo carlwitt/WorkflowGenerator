@@ -414,7 +414,7 @@ class ZipPSA extends AppJob {
 
         output("Cybershake_PSA.zip", zipSize);
 
-        double runtime = zipSize * ((Cybershake) getApp()).getRuntimeFactor() / ((Cybershake) getApp()).generateDouble("ZipPSA_rate");
+        double runtime = Math.max(1, zipSize * ((Cybershake) getApp()).getRuntimeFactor() / ((Cybershake) getApp()).generateDouble("ZipPSA_rate"));
         addAnnotation("runtime", String.format("%.2f", runtime));
 
         long peakMemory = cybershake.memoryModels.get("ZipPSA").generate(zipSize);

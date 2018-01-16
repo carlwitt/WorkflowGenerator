@@ -102,7 +102,7 @@ class AppGeneratorTest {
         // number of workflow instances per configuration (class, num tasks)
         // since each workflow has randomized runtimes, memory consumptions, etc. we want
         // more than one instance per configuration
-        int numInstances = 3;
+        int numInstances = 30;
 
         // create a new workflow for each configuration (workflow type, num tasks, instance id)
         // write the dax output file
