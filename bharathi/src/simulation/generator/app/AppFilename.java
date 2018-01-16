@@ -2,6 +2,8 @@ package simulation.generator.app;
 
 import java.io.IOException;
 import java.io.Writer;
+
+import com.sun.istack.internal.NotNull;
 import org.griphyn.vdl.dax.Filename;
 import org.griphyn.vdl.classes.LFN;
 import java.util.HashMap;
@@ -10,12 +12,13 @@ import java.util.Map;
 /**
  * @author Shishir Bharathi
  */
-class AppFilename extends Filename {
+public class AppFilename extends Filename {
 
     private final Map<String, String> annotations;
 
     public AppFilename(String filename, int type, long size) {
         this(filename, type, size, LFN.XFER_MANDATORY, true);
+        assert filename != null : "passed null as filename to AppFilename constructor, type = [" + type + "], size = [" + size + "]";
     }
 
     public AppFilename(String filename, int type, long size, int transfer, boolean register) {
@@ -24,6 +27,7 @@ class AppFilename extends Filename {
         this.annotations.put("size", String.valueOf(size));
         super.setTransfer(transfer);
         super.setRegister(register);
+        assert filename != null : "passed null as filename to AppFilename constructor, type = [" + type + "], size = [" + size + "], transfer = [" + transfer + "], register = [" + register + "]";
     }
 
     public Map<String, String> getAnnotations() {
@@ -40,6 +44,11 @@ class AppFilename extends Filename {
         result.append("/>\n");
 
         return result.toString();
+    }
+
+    /** This is used to override file sizes to conform to a random memory model {@link simulation.generator.util.LinearModel} that has a dependency on file size. */
+    public void setSize(long filesize) {
+        this.annotations.put("size", Long.toString(filesize));
     }
 
     public long getSize() {
@@ -81,23 +90,19 @@ class AppFilename extends Filename {
         return f;
     }
 
-    /*
-     * Simple hashCode() and equals().
-     */
+
     @Override
-    public int hashCode() {
-        return getFilename().hashCode() + getType();
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        AppFilename that = (AppFilename) o;
+
+        return annotations != null ? annotations.equals(that.annotations) : that.annotations == null;
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        final AppFilename other = (AppFilename) obj;
-        return getFilename().equals(other.getFilename()) && getType() == other.getType();
+    public int hashCode() {
+        return annotations != null ? annotations.hashCode() : 0;
     }
 }

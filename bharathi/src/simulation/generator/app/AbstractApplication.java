@@ -8,7 +8,7 @@ import java.io.OutputStreamWriter;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.HashMap;
-import java.util.stream.Collectors;
+import java.util.function.IntFunction;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -78,6 +78,28 @@ public abstract class AbstractApplication implements Application {
      * This should match the names of the classes created for the tasks, e.g., {@link ExtractSGT}, {@link SeismogramSynthesis}, etc.
      * This is used to create a map that relates task types names to {@link LinearModel}s, as passed to {@link #generateWorkflow(Map, String...)}. */
     public abstract String[] getTasktypes();
+
+    public AppJob[] getTasks(String tasktype){
+        Iterable iterable = getDAX()::iterateJob;
+        Stream<AppJob> targetStream = StreamSupport.stream(iterable.spliterator(), false);
+        return targetStream.filter( task -> task.getClass().getSimpleName().equals(tasktype)).toArray(AppJob[]::new); //j -> Long.parseLong(j.getAnnotation("peak_mem_bytes")));
+        // write out memory distributions
+        // if(numTasks==2000){
+        //     FileWriter fileWriter = new FileWriter("evaluation/sampled-peak-mem-"+app.getClass().getSimpleName()+".csv");
+        //     Iterable iterable = app.getDAX()::iterateJob;
+        //     Stream<AppJob> targetStream = StreamSupport.stream(iterable.spliterator(), false);
+        //     fileWriter.write(String.format("task_type,input_size_total_bytes,peak_mem_bytes\n"));
+        //     targetStream.forEach(j -> {
+        //         try {
+        //             fileWriter.write(String.format("%s,%s,%s%n",j.getName(),j.getAnnotation("input_total_bytes"),j.getAnnotation("peak_mem_bytes")));
+        //         } catch (IOException e) {
+        //             e.printStackTrace();
+        //         }
+        //     });
+        //     fileWriter.close();
+        // }
+        // }
+    }
 
     /** Generate a synthetic workflow with the same topology as the {@link AbstractApplication} but different resource usage characteristics.
      * This was used to generate the workflow suite used in Witt et al. 2018 */
@@ -155,19 +177,11 @@ public abstract class AbstractApplication implements Application {
             statistics.maximumPeakMemoryBytes = (long) Math.max(statistics.maximumPeakMemoryBytes, statistics.memoryUsagesPerTaskType.get(tasktype).getMax());
             statistics.minimumPeakMemory= (long) Math.min(statistics.minimumPeakMemory, statistics.memoryUsagesPerTaskType.get(tasktype).getMin());
 
-            System.out.println("tasktype = " + tasktype);
-//            System.out.println("numberOfTasksPerTaskType = " + statistics.numberOfTasksPerTaskType.get(tasktype));
-            System.out.println("inputSizes = " + descriptiveStats(statistics.inputSizesPerTaskType.get(tasktype)));
-            System.out.println("peakMem = " + descriptiveStats(statistics.memoryUsagesPerTaskType.get(tasktype)));
         }
 
         return statistics;
     }
 
-    private static String descriptiveStats(DescriptiveStatistics s){
-        return String.format("[%s, %s] µ=%s, σ=%s in MEGA", s.getMin()/1e6, s.getMax()/1e6, s.getMean()/1e6, s.getStandardDeviation()/1e6);
-    }
-    
     protected abstract void processArgs(String[] args);
     protected abstract void constructWorkflow();
 

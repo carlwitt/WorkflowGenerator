@@ -391,9 +391,9 @@ class TmpltBank extends AppJob {
         double runtime = ligo.generateDouble("TmpltBank") * ligo.getRuntimeFactor();
         addAnnotation("runtime", String.format("%.2f", runtime));
 
-        // the value passed to getPeakMemoryConsumption is irrelevant, it just serves as a seed for the random
+        // the value passed to generate is irrelevant, it just serves as a seed for the random
         // number generator of the constant model
-        long peakMemory = ligo.memoryModels.get("TmpltBank").getPeakMemoryConsumption((long) (runtime*1e6));
+        long peakMemory = ligo.memoryModels.get("TmpltBank").generate((long) (runtime*1e6));
         double peakMemoryTimeRelative = ligo.generateDouble("TmpltBank_peak_mem_relative_time");
         addAnnotation("peak_mem_bytes", ""+peakMemory);
         addArgument(new PseudoText(String.format("peak_mem_bytes=%d,peak_memory_relative_time=%.3f", peakMemory, peakMemoryTimeRelative)));
@@ -428,9 +428,9 @@ class Inspiral extends AppJob {
         double runtime = ligo.generateDouble("Inspiral") * ligo.getRuntimeFactor();
         addAnnotation("runtime", String.format("%.2f", runtime));
 
-        // the value passed to getPeakMemoryConsumption is irrelevant, it just serves as a seed for the random
+        // the value passed to generate is irrelevant, it just serves as a seed for the random
         // number generator of the constant model
-        long peakMemory = ligo.memoryModels.get("Inspiral").getPeakMemoryConsumption((long) (runtime*1e6));
+        long peakMemory = ligo.memoryModels.get("Inspiral").generate((long) (runtime*1e6));
         double peakMemoryTimeRelative = ligo.generateDouble("Inspiral_peak_mem_relative_time");
         addAnnotation("peak_mem_bytes", ""+peakMemory);
         addArgument(new PseudoText(String.format("peak_mem_bytes=%d,peak_memory_relative_time=%.3f", peakMemory, peakMemoryTimeRelative)));
@@ -465,9 +465,9 @@ class Thinca extends AppJob {
         double runtime = ligo.generateDouble("Thinca") * ligo.getRuntimeFactor();
         addAnnotation("runtime", String.format("%.2f", runtime));
 
-        // the value passed to getPeakMemoryConsumption is irrelevant, it just serves as a seed for the random
+        // the value passed to generate is irrelevant, it just serves as a seed for the random
         // number generator of the constant model
-        long peakMemory = ligo.memoryModels.get("Thinca").getPeakMemoryConsumption((long) (runtime*1e6));
+        long peakMemory = ligo.memoryModels.get("Thinca").generate((long) (runtime*1e6));
         double peakMemoryTimeRelative = ligo.generateDouble("Thinca_peak_mem_relative_time");
         addAnnotation("peak_mem_bytes", ""+peakMemory);
         addArgument(new PseudoText(String.format("peak_mem_bytes=%d,peak_memory_relative_time=%.3f", peakMemory, peakMemoryTimeRelative)));
@@ -493,7 +493,8 @@ class Thinca extends AppJob {
         if (child != null) {
             addLink(child, filename, size);
         } else {
-            output(filename, size);
+            // @carlwitt changed this to THINCA.xml instead of filename, because for large numbers of tasks, filename was null sometimes, leading to NPEs later on
+            output("THINCA.xml", size);
         }
     }
 
@@ -515,9 +516,9 @@ class TrigBank extends AppJob {
         double runtime = ligo.generateDouble("TrigBank") * ligo.getRuntimeFactor();
         addAnnotation("runtime", String.format("%.2f", runtime * ligo.getRuntimeFactor()));
 
-        // the value passed to getPeakMemoryConsumption is irrelevant, it just serves as a seed for the random
+        // the value passed to generate is irrelevant, it just serves as a seed for the random
         // number generator of the constant model
-        long peakMemory = ligo.memoryModels.get("TrigBank").getPeakMemoryConsumption((long) (runtime*1e6));
+        long peakMemory = ligo.memoryModels.get("TrigBank").generate((long) (runtime*1e6));
         double peakMemoryTimeRelative = ligo.generateDouble("TrigBank_peak_mem_relative_time");
         addAnnotation("peak_mem_bytes", ""+peakMemory);
         addArgument(new PseudoText(String.format("peak_mem_bytes=%d,peak_memory_relative_time=%.3f", peakMemory, peakMemoryTimeRelative)));

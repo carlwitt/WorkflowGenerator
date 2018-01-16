@@ -10,7 +10,7 @@ import java.util.Random;
 public class Misc {
 
     private static final Random random;
-    private static final int MAX_TRIES = 10000;
+    private static final int MAX_TRIES = 100000;
     
     static {
         random = new Random(129039123023L);
@@ -73,9 +73,10 @@ public class Misc {
     }
 
     /**
-     * Create a set of random numbers (>= 0) that add up to sum.
+     * Create an array of n random numbers (>= 0) that add up to sum.
      */
     public static int[] randomSet(int n, int sum) {
+        // at least one number, non-negative sum
         if ((n < 1) || (sum < 0)) {
             throw new IllegalArgumentException("Cannot satisfy sum.");
         }
@@ -167,23 +168,26 @@ public class Misc {
             throw new IllegalArgumentException("Cannot satisfy sum.");
         }
         
-        for (int i = 0; i < MAX_TRIES; i++) {
-            boolean found = true;
-            int[] temp = randomSet(n, sum);
+        int[] temp = randomSet(n, sum);
+        // make sure that no value is larger than max and no value is zero
+        int carryOver = 0;
+        for (int j = 0; j < n || carryOver != 0; j++) {
 
-            inner: for (int j = 0; j < n; j++) {
-                if (temp[j] == 0 || temp[j] > max) {
-                    found = false;
-                    break;
-                }
-            }
-            
-            if (found) {
-                return temp;
+            temp[j%n] += carryOver;
+            carryOver = 0;
+
+            if (temp[j%n] == 0){
+                temp[j%n]++;
+                carryOver = -1;
+            } else if (temp[j%n] > max) {
+                temp[j%n]--;
+                carryOver = 1;
             }
         }
-        
-        throw new RuntimeException("too many attempts. n, sum, max = " + n + ", " + sum + ", " + max);
+        assert Arrays.stream(temp).sum() == sum : String.format("Elements do not add up to %d", sum);
+        assert Arrays.stream(temp).max().getAsInt() <= max : String.format("Elements exceed %d", max);
+
+        return temp;
     }
 
     /**

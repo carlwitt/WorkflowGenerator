@@ -33,7 +33,7 @@ public class AppJob extends Job {
         this.annotations = new HashMap<>();
     }
 
-    void addAnnotation(String key, String value) {
+    public void addAnnotation(String key, String value) {
         this.annotations.put(key, value);
     }
 
@@ -45,7 +45,7 @@ public class AppJob extends Job {
         return this.app;
     }
 
-    Set<AppFilename> getInputs() {
+    public Set<AppFilename> getInputs() {
         return this.inputs;
     }
 

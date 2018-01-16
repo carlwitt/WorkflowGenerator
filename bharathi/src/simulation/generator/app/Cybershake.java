@@ -215,7 +215,9 @@ public class Cybershake extends AbstractApplication {
         distributions.put("SLIP", Distribution.getUniformDistribution(0, 10000));
         distributions.put("HIPO", Distribution.getUniformDistribution(0, 10000));
         distributions.put("VARIATION", Distribution.getTruncatedNormalDistribution(3708598.53, 3187576.*3187576.));
-        distributions.put("GRM", Distribution.getConstantDistribution(24000));
+        // override instead of replace this to conserve the possibility to generate the original workflows
+         distributions.put("GRM", Distribution.getConstantDistribution(24000));
+//        distributions.put("GRM", Distribution.getTruncatedNormalDistribution(100e6,10e16));
         distributions.put("BSA", Distribution.getConstantDistribution(216));
         distributions.put("ZipSeis_factor", Distribution.getConstantDistribution(6));
         distributions.put("ZipPSA_factor", Distribution.getConstantDistribution(6));
@@ -273,7 +275,7 @@ class ExtractSGT extends AppJob {
         double runtime = cybershake.generateDouble("ExtractSGT") * cybershake.getRuntimeFactor();
         addAnnotation("runtime", String.format("%.2f", runtime));
 
-        long peakMemory = cybershake.memoryModels.get("ExtractSGT").getPeakMemoryConsumption(2*size);
+        long peakMemory = cybershake.memoryModels.get("ExtractSGT").generate(2*size);
         double peakMemoryTimeRelative = cybershake.generateDouble("ExtractSGT_peak_mem_relative_time");
         addAnnotation("input_total_bytes", ""+2*size);
         addAnnotation("peak_mem_bytes", ""+peakMemory);
@@ -320,7 +322,7 @@ class SeismogramSynthesis extends AppJob {
         double runtime = cybershake.generateDouble("SeismogramSynthesis") * cybershake.getRuntimeFactor();
         addAnnotation("runtime", String.format("%.2f", runtime));
 
-        long peakMemory = cybershake.memoryModels.get("SeismogramSynthesis").getPeakMemoryConsumption(size);
+        long peakMemory = cybershake.memoryModels.get("SeismogramSynthesis").generate(size);
         double peakMemoryTimeRelative = cybershake.generateDouble("SeismogramSynthesis_peak_mem_relative_time");
         addAnnotation("input_total_bytes", ""+size);
         addAnnotation("peak_mem_bytes", ""+peakMemory);
@@ -341,7 +343,7 @@ class PeakValCalcOkaya extends AppJob {
         double runtime = cybershake.generateDouble("PeakValCalcOkaya") * cybershake.getRuntimeFactor();
         addAnnotation("runtime", String.format("%.2f", runtime * cybershake.getRuntimeFactor()));
 
-        long peakMemory = cybershake.memoryModels.get("PeakValCalcOkaya").getPeakMemoryConsumption((long) (runtime*1e6));
+        long peakMemory = cybershake.memoryModels.get("PeakValCalcOkaya").generate((long) (runtime*1e6));
         double peakMemoryTimeRelative = cybershake.generateDouble("PeakValCalcOkaya_peak_mem_relative_time");
         addAnnotation("input_total_bytes", "0");
         addAnnotation("peak_mem_bytes", ""+peakMemory);
@@ -365,7 +367,7 @@ class PeakValCalcOkaya extends AppJob {
 
 class ZipSeis extends AppJob {
 
-    Cybershake cybershake;
+    private Cybershake cybershake;
     public ZipSeis(Cybershake cybershake, String name, String version, String jobID) {
         super(cybershake, Cybershake.NAMESPACE, name, version, jobID);
         this.cybershake = cybershake;
@@ -383,10 +385,10 @@ class ZipSeis extends AppJob {
         long zipSize = Misc.randomLong((long) (inputs.size() * app.generateLong("GRM") / app.generateDouble("ZipSeis_factor")), 0.25);
 
         output("Cybershake_Seismograms.zip", zipSize);
-        double runtime = zipSize * app.getRuntimeFactor() / app.generateDouble("ZipSeis_rate");
+        double runtime = Math.max(1, zipSize * app.getRuntimeFactor() / app.generateDouble("ZipSeis_rate"));
         addAnnotation("runtime", String.format("%.2f", runtime));
 
-        long peakMemory = cybershake.memoryModels.get("ZipSeis").getPeakMemoryConsumption(zipSize);
+        long peakMemory = cybershake.memoryModels.get("ZipSeis").generate(zipSize);
         double peakMemoryTimeRelative = cybershake.generateDouble("ZipSeis_peak_mem_relative_time");
         addAnnotation("input_total_bytes", zipSize+"");
         addAnnotation("peak_mem_bytes", ""+peakMemory);
@@ -415,7 +417,7 @@ class ZipPSA extends AppJob {
         double runtime = zipSize * ((Cybershake) getApp()).getRuntimeFactor() / ((Cybershake) getApp()).generateDouble("ZipPSA_rate");
         addAnnotation("runtime", String.format("%.2f", runtime));
 
-        long peakMemory = cybershake.memoryModels.get("ZipPSA").getPeakMemoryConsumption(zipSize);
+        long peakMemory = cybershake.memoryModels.get("ZipPSA").generate(zipSize);
         double peakMemoryTimeRelative = cybershake.generateDouble("ZipPSA_peak_mem_relative_time");
         addAnnotation("input_total_bytes", zipSize+"");
         addAnnotation("peak_mem_bytes", ""+peakMemory);
