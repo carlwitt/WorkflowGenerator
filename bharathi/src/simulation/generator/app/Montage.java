@@ -461,11 +461,6 @@ class MAdd extends AppJob {
         long filesize = montage.generateLong("region.hdr");
         input("region.hdr", filesize);
 
-        // memory
-        String filesizeString = ""+filesize;
-        addAnnotation("peak_mem_bytes", filesizeString);
-        addArgument(new PseudoText(filesizeString));
-
         this.jobID = jobID;
 
     }

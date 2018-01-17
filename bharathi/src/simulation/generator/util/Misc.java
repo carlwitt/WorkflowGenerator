@@ -173,19 +173,25 @@ public class Misc {
         int carryOver = 0;
         for (int j = 0; j < n || carryOver != 0; j++) {
 
-            temp[j%n] += carryOver;
-            carryOver = 0;
+            if(carryOver > 0){
+                temp[j%n]++;
+                carryOver--;
+            } else if(carryOver < 0){
+                temp[j%n]--;
+                carryOver++;
+            }
 
             if (temp[j%n] == 0){
                 temp[j%n]++;
-                carryOver = -1;
+                carryOver--;
             } else if (temp[j%n] > max) {
-                temp[j%n]--;
-                carryOver = 1;
+                // carry the excess mass to somewhere else
+                carryOver += temp[j % n] - max;
+                temp[j%n] = max;
             }
         }
-        assert Arrays.stream(temp).sum() == sum : String.format("Elements do not add up to %d", sum);
-        assert Arrays.stream(temp).max().getAsInt() <= max : String.format("Elements exceed %d", max);
+        assert Arrays.stream(temp).sum() == sum : String.format("Elements add up to %d instead of %s array: %s", Arrays.stream(temp).sum(), sum, Arrays.toString(temp));
+        assert Arrays.stream(temp).max().getAsInt() <= max : String.format("Max %d of numbers exceeds desired max %d, numbers: %s", Arrays.stream(temp).max().getAsInt(), max, Arrays.toString(temp));
 
         return temp;
     }

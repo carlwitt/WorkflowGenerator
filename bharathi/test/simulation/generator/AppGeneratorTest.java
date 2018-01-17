@@ -3,6 +3,7 @@ package simulation.generator;
 import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
 import org.griphyn.cPlanner.code.generator.Abstract;
 import org.griphyn.vdl.dax.Job;
+import org.griphyn.vdl.dax.PseudoText;
 import org.junit.jupiter.api.Test;
 import simulation.generator.app.*;
 import simulation.generator.util.LinearModel;
@@ -125,7 +126,11 @@ class AppGeneratorTest {
                         app.memoryModels.put(tasktype, linearModel);
 //                        System.out.println("tasks.length = " + tasks.length);
                         for (int i = 0; i < tasks.length; i++) {
-                            tasks[i].addAnnotation("peak_mem_bytes", Long.toString((long) linearModel.getSamples()[1][i]));
+                            // add memory consumption both as XML element attribute and (as a compatibility hack, as a separate <argument> element)
+                            long peakMemoryConsumptionByte = (long) linearModel.getSamples()[1][i];
+                            tasks[i].addAnnotation("peak_mem_bytes", Long.toString(peakMemoryConsumptionByte));
+                            tasks[i].addArgument(new PseudoText(String.format("peak_mem_bytes=%d,peak_memory_relative_time=%.3f", peakMemoryConsumptionByte, 0.5)));
+
                             long inputSize = (long) linearModel.getSamples()[0][i];
                             if(tasks[i].getInputs().size() == 0) {
                                 System.err.printf("AppGeneratorTest.generateWorkflows: %s (%s, %s tasks, instance %s) has zero input files to distribute input size to", tasktype, appClass.getSimpleName(), numTasks, instanceID);

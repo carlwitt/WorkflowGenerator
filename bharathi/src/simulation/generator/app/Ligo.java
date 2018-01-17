@@ -331,24 +331,6 @@ public class Ligo extends AbstractApplication {
         this.distributions.put("Thinca", Distribution.getTruncatedNormalDistribution(5.37, 0.06));
         this.distributions.put("TrigBank", Distribution.getTruncatedNormalDistribution(5.11, 0.1));
 
-        /*
-         * Memory models.
-         */
-        memoryModels.put("TmpltBank", LinearModel.constant(404.54e6, 0.02e6, 10e6));
-        // TODO revert this to a realistic model, original value for standard deviation was 116.26e6
-        memoryModels.put("Inspiral", LinearModel.constant(3000e6, 800.6e6, 10e6));
-        memoryModels.put("Thinca", LinearModel.constant(2.63e6, 0.83e6, 10e6));
-        memoryModels.put("TrigBank", LinearModel.constant(2.04e6, 0.14e6, 10e6));
-
-        /*
-         * Peak memory relative time distributions.
-         */
-        Distribution peakMemRelativeTime = Distribution.getUniformDistribution(0.4,0.6);
-        distributions.put("TmpltBank_peak_mem_relative_time", peakMemRelativeTime);
-        distributions.put("Inspiral_peak_mem_relative_time", peakMemRelativeTime);
-        distributions.put("Thinca_peak_mem_relative_time", peakMemRelativeTime);
-        distributions.put("TrigBank_peak_mem_relative_time", peakMemRelativeTime);
-
     }
 
     @Override
@@ -390,13 +372,6 @@ class TmpltBank extends AppJob {
         this.setLevel(0);
         double runtime = ligo.generateDouble("TmpltBank") * ligo.getRuntimeFactor();
         addAnnotation("runtime", String.format("%.2f", runtime));
-
-        // the value passed to generate is irrelevant, it just serves as a seed for the random
-        // number generator of the constant model
-        long peakMemory = ligo.memoryModels.get("TmpltBank").generate((long) (runtime*1e6));
-        double peakMemoryTimeRelative = ligo.generateDouble("TmpltBank_peak_mem_relative_time");
-        addAnnotation("peak_mem_bytes", ""+peakMemory);
-        addArgument(new PseudoText(String.format("peak_mem_bytes=%d,peak_memory_relative_time=%.3f", peakMemory, peakMemoryTimeRelative)));
     }
 
     public void addInputs(Set<AppFilename> inputs) {
@@ -427,13 +402,6 @@ class Inspiral extends AppJob {
         input(String.format("HL-INJECTIONS_100-%d-%d.xml", INJECTION_KEY1, INJECTION_KEY2), inputSize);
         double runtime = ligo.generateDouble("Inspiral") * ligo.getRuntimeFactor();
         addAnnotation("runtime", String.format("%.2f", runtime));
-
-        // the value passed to generate is irrelevant, it just serves as a seed for the random
-        // number generator of the constant model
-        long peakMemory = ligo.memoryModels.get("Inspiral").generate((long) (runtime*1e6));
-        double peakMemoryTimeRelative = ligo.generateDouble("Inspiral_peak_mem_relative_time");
-        addAnnotation("peak_mem_bytes", ""+peakMemory);
-        addArgument(new PseudoText(String.format("peak_mem_bytes=%d,peak_memory_relative_time=%.3f", peakMemory, peakMemoryTimeRelative)));
     }
 
     public void addInputs(Set<AppFilename> inputs) {
@@ -464,13 +432,6 @@ class Thinca extends AppJob {
         this.setLevel(level);
         double runtime = ligo.generateDouble("Thinca") * ligo.getRuntimeFactor();
         addAnnotation("runtime", String.format("%.2f", runtime));
-
-        // the value passed to generate is irrelevant, it just serves as a seed for the random
-        // number generator of the constant model
-        long peakMemory = ligo.memoryModels.get("Thinca").generate((long) (runtime*1e6));
-        double peakMemoryTimeRelative = ligo.generateDouble("Thinca_peak_mem_relative_time");
-        addAnnotation("peak_mem_bytes", ""+peakMemory);
-        addArgument(new PseudoText(String.format("peak_mem_bytes=%d,peak_memory_relative_time=%.3f", peakMemory, peakMemoryTimeRelative)));
     }
 
     private void generateOutput(AppJob child) {
@@ -515,13 +476,6 @@ class TrigBank extends AppJob {
         this.setLevel(3);
         double runtime = ligo.generateDouble("TrigBank") * ligo.getRuntimeFactor();
         addAnnotation("runtime", String.format("%.2f", runtime * ligo.getRuntimeFactor()));
-
-        // the value passed to generate is irrelevant, it just serves as a seed for the random
-        // number generator of the constant model
-        long peakMemory = ligo.memoryModels.get("TrigBank").generate((long) (runtime*1e6));
-        double peakMemoryTimeRelative = ligo.generateDouble("TrigBank_peak_mem_relative_time");
-        addAnnotation("peak_mem_bytes", ""+peakMemory);
-        addArgument(new PseudoText(String.format("peak_mem_bytes=%d,peak_memory_relative_time=%.3f", peakMemory, peakMemoryTimeRelative)));
     }
 
     @Override
