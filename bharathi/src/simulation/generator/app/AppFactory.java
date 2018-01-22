@@ -16,6 +16,7 @@ public class AppFactory {
         appMap.put("MONTAGE", new Montage());
         appMap.put("Sipht", new Sipht());
         appMap.put("CYBERSHAKE", new Cybershake());
+        appMap.put("VC", new VariantCalling());
     }
     
     public static Application getApp(String appName) throws Exception {
