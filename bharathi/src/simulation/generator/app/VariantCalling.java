@@ -1,29 +1,19 @@
 package simulation.generator.app;
 
-import gnu.getopt.Getopt;
-import gnu.getopt.LongOpt;
 import org.griphyn.vdl.dax.PseudoText;
 import simulation.generator.util.Distribution;
 import simulation.generator.util.LinearModel;
-import simulation.generator.util.Misc;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import java.util.Arrays;
 import java.util.Set;
 
 public class VariantCalling extends AbstractApplication {
 
-    private double runtimeFactor = 1;
-
     private int gunzips = 2;
     private int paths   = 25;
 
-    public static final String NAMESPACE = "VariantCalling";
+    static final String NAMESPACE = "VariantCalling";
 
     private void usage(int exitCode) {
 
@@ -35,8 +25,8 @@ public class VariantCalling extends AbstractApplication {
         System.exit(exitCode);
     }
 
-    public double getRuntimeFactor() {
-        return this.runtimeFactor;
+    double getRuntimeFactor() {
+        return 1.;
     }
 
     @Override
@@ -49,7 +39,7 @@ public class VariantCalling extends AbstractApplication {
         // The root tasks
         VC_Untar untar = new VC_Untar(this, "untar", "1.0", getNewJobID());
 
-        Set<VC_Gunzip> gunzipSet = new HashSet<VC_Gunzip>();
+        Set<VC_Gunzip> gunzipSet = new HashSet<>();
 
         for (int i = 0; i < this.gunzips; i++)
             gunzipSet.add(new VC_Gunzip(this, "gunzip", "1.0", getNewJobID()));
@@ -183,10 +173,10 @@ public class VariantCalling extends AbstractApplication {
 
 class VC_Untar extends AppJob {
 
-    VariantCalling vc;
-    HashMap<Integer, Long> pathFsize = new HashMap<Integer, Long>();
+    private VariantCalling vc;
+    private HashMap<Integer, Long> pathFsize = new HashMap<>();
 
-    public VC_Untar(VariantCalling vc, String name, String version, String jobID) {
+    VC_Untar(VariantCalling vc, String name, String version, String jobID) {
         super(vc, VariantCalling.NAMESPACE, name, version, jobID);
 
         this.vc = vc;
@@ -195,7 +185,7 @@ class VC_Untar extends AppJob {
         input("hg38.tar", size);
 
         double runtime                = vc.generateDouble("UNTAR_TIME") * vc.getRuntimeFactor();
-        long   peakMemory             = vc.memoryModels.get("UNTAR_MEM").getPeakMemoryConsumption(2*size);
+        long   peakMemory             = vc.memoryModels.get("UNTAR_MEM").generate(2*size);
         double peakMemoryTimeRelative = vc.generateDouble("UNTAR_peak_mem_relative_time");
 
         addAnnotation("runtime", String.format("%.2f", runtime));
@@ -206,7 +196,7 @@ class VC_Untar extends AppJob {
 
     }
 
-    public void addChild(AppJob child, int path) {
+    void addChild(AppJob child, int path) {
 
         // Check if the output file for this task has been generated
         long fileSize = 0;
@@ -230,21 +220,18 @@ class VC_Untar extends AppJob {
 
 class VC_Gunzip extends AppJob {
 
-    VariantCalling vc;
+    private String outFileName;
+    private long outFileSize;
 
-    String outFileName;
-    long outFileSize;
-
-    public VC_Gunzip(VariantCalling vc, String name, String version, String jobID) {
+    VC_Gunzip(VariantCalling vc, String name, String version, String jobID) {
 
         super(vc, VariantCalling.NAMESPACE, name, version, jobID);
-        this.vc = vc;
 
         long size = vc.generateLong("GUNZIP_INPUT");
         input("SRR359188_" + jobID + ".filt.fastq.gz", size);  // 223618467  225289381
 
         double runtime                = vc.generateDouble("GUNZIP_TIME") * vc.getRuntimeFactor();
-        long   peakMemory             = vc.memoryModels.get("GUNZIP_MEM").getPeakMemoryConsumption(2*size);
+        long   peakMemory             = vc.memoryModels.get("GUNZIP_MEM").generate(2*size);
         double peakMemoryTimeRelative = vc.generateDouble("GUNZIP_peak_mem_relative_time");
 
         addAnnotation("runtime", String.format("%.2f", runtime));
@@ -269,9 +256,9 @@ class VC_Gunzip extends AppJob {
 
 class VC_Fastqc extends AppJob {
 
-    VariantCalling vc;
+    private VariantCalling vc;
 
-    public VC_Fastqc(VariantCalling vc, String name, String version, String jobID) {
+    VC_Fastqc(VariantCalling vc, String name, String version, String jobID) {
 
         super(vc, VariantCalling.NAMESPACE, name, version, jobID);
         this.vc = vc;
@@ -290,7 +277,7 @@ class VC_Fastqc extends AppJob {
             inputSize += input.getSize();
 
         double runtime                = vc.generateDouble("FASTQC_TIME") * vc.getRuntimeFactor();
-        long   peakMemory             = vc.memoryModels.get("FASTQC_MEM").getPeakMemoryConsumption(inputSize);
+        long   peakMemory             = vc.memoryModels.get("FASTQC_MEM").generate(inputSize);
         double peakMemoryTimeRelative = vc.generateDouble("FASTQC_peak_mem_relative_time");
 
         addAnnotation("runtime", String.format("%.2f", runtime));
@@ -305,16 +292,16 @@ class VC_Fastqc extends AppJob {
 
 class VC_Faidx extends AppJob {
 
-    VariantCalling vc;
+    private VariantCalling vc;
 
-    public VC_Faidx(VariantCalling vc, String name, String version, String jobID) {
+    VC_Faidx(VariantCalling vc, String name, String version, String jobID) {
 
         super(vc, VariantCalling.NAMESPACE, name, version, jobID);
         this.vc = vc;
 
     }
 
-    public void addChild(AppJob child, int path) {
+    void addChild(AppJob child, int path) {
 
         // Task has always one child, thus the output file will be added here
         addLink(child, "chr" + path + ".fa.fai", vc.generateLong("FAIDX_OUTPUT"));
@@ -331,7 +318,7 @@ class VC_Faidx extends AppJob {
             inputSize += input.getSize();
 
         double runtime                = vc.generateDouble("FAIDX_TIME") * vc.getRuntimeFactor();
-        long   peakMemory             = vc.memoryModels.get("FAIDX_MEM").getPeakMemoryConsumption(inputSize);
+        long   peakMemory             = vc.memoryModels.get("FAIDX_MEM").generate(inputSize);
         double peakMemoryTimeRelative = vc.generateDouble("FAIDX_peak_mem_relative_time");
 
         addAnnotation("runtime", String.format("%.2f", runtime));
@@ -346,16 +333,16 @@ class VC_Faidx extends AppJob {
 
 class VC_Build extends AppJob {
 
-    VariantCalling vc;
+    private VariantCalling vc;
 
-    public VC_Build(VariantCalling vc, String name, String version, String jobID) {
+    VC_Build(VariantCalling vc, String name, String version, String jobID) {
 
         super(vc, VariantCalling.NAMESPACE, name, version, jobID);
         this.vc = vc;
 
     }
 
-    public void addChild(AppJob child, int path) {
+    void addChild(AppJob child, int path) {
 
         // VC_Build has always one child, thus the output file will be added here
         addLink(child, path + "_idx.tar", vc.generateLong("BUILD_OUTPUT"));
@@ -372,7 +359,7 @@ class VC_Build extends AppJob {
             inputSize += input.getSize();
 
         double runtime                = vc.generateDouble("BUILD_TIME") * vc.getRuntimeFactor();
-        long   peakMemory             = vc.memoryModels.get("BUILD_MEM").getPeakMemoryConsumption(inputSize);
+        long   peakMemory             = vc.memoryModels.get("BUILD_MEM").generate(inputSize);
         double peakMemoryTimeRelative = vc.generateDouble("BUILD_peak_mem_relative_time");
 
         addAnnotation("runtime", String.format("%.2f", runtime));
@@ -387,16 +374,16 @@ class VC_Build extends AppJob {
 
 class VC_Align extends AppJob {
 
-    VariantCalling vc;
+    private VariantCalling vc;
 
-    public VC_Align(VariantCalling vc, String name, String version, String jobID) {
+    VC_Align(VariantCalling vc, String name, String version, String jobID) {
 
         super(vc, VariantCalling.NAMESPACE, name, version, jobID);
         this.vc = vc;
 
     }
 
-    public void addChild(AppJob child, int path) {
+    void addChild(AppJob child, int path) {
 
         // Task has always one child, thus the output file will be added here
         addLink(child, path + "_alignment.bam", vc.generateLong("ALIGN_OUTPUT"));
@@ -413,7 +400,7 @@ class VC_Align extends AppJob {
             inputSize += input.getSize();
 
         double runtime                = vc.generateDouble("ALIGN_TIME") * vc.getRuntimeFactor();
-        long   peakMemory             = vc.memoryModels.get("ALIGN_MEM").getPeakMemoryConsumption(inputSize);
+        long   peakMemory             = vc.memoryModels.get("ALIGN_MEM").generate(inputSize);
         double peakMemoryTimeRelative = vc.generateDouble("ALIGN_peak_mem_relative_time");
 
         addAnnotation("runtime", String.format("%.2f", runtime));
@@ -428,16 +415,16 @@ class VC_Align extends AppJob {
 
 class VC_Sort extends AppJob {
 
-    VariantCalling vc;
+    private VariantCalling vc;
 
-    public VC_Sort(VariantCalling vc, String name, String version, String jobID) {
+    VC_Sort(VariantCalling vc, String name, String version, String jobID) {
 
         super(vc, VariantCalling.NAMESPACE, name, version, jobID);
         this.vc = vc;
 
     }
 
-    public void addChild(AppJob child, int path) {
+    void addChild(AppJob child, int path) {
 
         // Task has always one child, thus the output file will be added here
         addLink(child, path + "_sorted.bam", vc.generateLong("SORT_OUTPUT"));
@@ -454,7 +441,7 @@ class VC_Sort extends AppJob {
             inputSize += input.getSize();
 
         double runtime                = vc.generateDouble("SORT_TIME") * vc.getRuntimeFactor();
-        long   peakMemory             = vc.memoryModels.get("SORT_MEM").getPeakMemoryConsumption(inputSize);
+        long   peakMemory             = vc.memoryModels.get("SORT_MEM").generate(inputSize);
         double peakMemoryTimeRelative = vc.generateDouble("SORT_peak_mem_relative_time");
 
         addAnnotation("runtime", String.format("%.2f", runtime));
@@ -469,16 +456,16 @@ class VC_Sort extends AppJob {
 
 class VC_Pileup extends AppJob {
 
-    VariantCalling vc;
+    private VariantCalling vc;
 
-    public VC_Pileup(VariantCalling vc, String name, String version, String jobID) {
+    VC_Pileup(VariantCalling vc, String name, String version, String jobID) {
 
         super(vc, VariantCalling.NAMESPACE, name, version, jobID);
         this.vc = vc;
 
     }
 
-    public void addChild(AppJob child, int path) {
+    void addChild(AppJob child, int path) {
 
         // Task has always one child, thus the output file will be added here
         addLink(child, path + "_mpileup.csv", vc.generateLong("PILEUP_OUTPUT"));
@@ -495,7 +482,7 @@ class VC_Pileup extends AppJob {
             inputSize += input.getSize();
 
         double runtime                = vc.generateDouble("PILEUP_TIME") * vc.getRuntimeFactor();
-        long   peakMemory             = vc.memoryModels.get("PILEUP_MEM").getPeakMemoryConsumption(inputSize);
+        long   peakMemory             = vc.memoryModels.get("PILEUP_MEM").generate(inputSize);
         double peakMemoryTimeRelative = vc.generateDouble("PILEUP_peak_mem_relative_time");
 
         addAnnotation("runtime", String.format("%.2f", runtime));
@@ -510,16 +497,16 @@ class VC_Pileup extends AppJob {
 
 class VC_Varscan extends AppJob {
 
-    VariantCalling vc;
+    private VariantCalling vc;
 
-    public VC_Varscan(VariantCalling vc, String name, String version, String jobID) {
+    VC_Varscan(VariantCalling vc, String name, String version, String jobID) {
 
         super(vc, VariantCalling.NAMESPACE, name, version, jobID);
         this.vc = vc;
 
     }
 
-    public void addChild(AppJob child, int path) {
+    void addChild(AppJob child, int path) {
 
         // Task has always one child, thus the output file will be added here
         addLink(child, path + "_variants.vcf", vc.generateLong("VARSCAN_OUTPUT"));
@@ -536,7 +523,7 @@ class VC_Varscan extends AppJob {
             inputSize += input.getSize();
 
         double runtime                = vc.generateDouble("VARSCAN_TIME") * vc.getRuntimeFactor();
-        long   peakMemory             = vc.memoryModels.get("VARSCAN_MEM").getPeakMemoryConsumption(inputSize);
+        long   peakMemory             = vc.memoryModels.get("VARSCAN_MEM").generate(inputSize);
         double peakMemoryTimeRelative = vc.generateDouble("VARSCAN_peak_mem_relative_time");
 
         addAnnotation("runtime", String.format("%.2f", runtime));
@@ -551,9 +538,9 @@ class VC_Varscan extends AppJob {
 
 class VC_Annovar extends AppJob {
 
-    VariantCalling vc;
+    private VariantCalling vc;
 
-    public VC_Annovar(VariantCalling vc, String name, String version, String jobID) {
+    VC_Annovar(VariantCalling vc, String name, String version, String jobID) {
 
         super(vc, VariantCalling.NAMESPACE, name, version, jobID);
         this.vc = vc;
@@ -578,7 +565,7 @@ class VC_Annovar extends AppJob {
         addAnnotation("runtime", String.format("%.2f", runtime));
 
         // Determine the peak memory consumption
-        long   peakMemory             = vc.memoryModels.get("ANNOVAR_MEM").getPeakMemoryConsumption(annovarSize);
+        long   peakMemory             = vc.memoryModels.get("ANNOVAR_MEM").generate(annovarSize);
         double peakMemoryTimeRelative = vc.generateDouble("ANNOVAR_peak_mem_relative_time");
 
         addAnnotation("input_total_bytes", inputSize+"");
