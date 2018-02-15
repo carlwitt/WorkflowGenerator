@@ -113,8 +113,8 @@ public class LinearModel {
         double minInput = 100e6;
         double maxInput = 1e9;
 
-        // average memory usage between 100 MB and 8 GB
-        double meanY = uniform(100e6, 8e9);
+        // average memory usage between 10 MB and maximum memory consumption
+        double meanY = uniform(10e6, maxMemConsumption);
         // standard deviation between 3% and 10% of the mean (seems low, but produces realistic feeling models; otherwise we get very large memory ranges)
         double varY = Math.pow(meanY * uniform(0.03, 0.1), 2.0);
         // zero slope in half of the cases, between 0.5 and 2 in the rest

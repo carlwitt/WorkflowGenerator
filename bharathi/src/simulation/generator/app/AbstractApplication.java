@@ -133,6 +133,7 @@ public abstract class AbstractApplication implements Application {
         // }
     }
 
+    /** @return information about the topology and resource consumption of the workflow. */
     public WorkflowStatistics getStatistics(){
 
         WorkflowStatistics statistics = new WorkflowStatistics();
@@ -170,6 +171,10 @@ public abstract class AbstractApplication implements Application {
 
         }
 
+        long minAverage = Long.MAX_VALUE;
+        long maxAverage = 0;
+
+        // TODO this should be placed in the WorkflowStatistics class
         // aggregate per task type statistics (min, max) into per workflow statistics
         for(String tasktype : getTasktypes()){
 
@@ -177,7 +182,16 @@ public abstract class AbstractApplication implements Application {
             statistics.maximumPeakMemoryBytes = (long) Math.max(statistics.maximumPeakMemoryBytes, statistics.memoryUsagesPerTaskType.get(tasktype).getMax());
             statistics.minimumPeakMemory= (long) Math.min(statistics.minimumPeakMemory, statistics.memoryUsagesPerTaskType.get(tasktype).getMin());
 
+            minAverage = (long) Math.min(minAverage, statistics.memoryUsagesPerTaskType.get(tasktype).getMean());
+            maxAverage = (long) Math.max(maxAverage, statistics.memoryUsagesPerTaskType.get(tasktype).getMean());
+
         }
+
+        // TODO double check these statistics
+        statistics.smallestAveragePeakMemoryBytes = minAverage;
+        statistics.largestAveragePeakMemoryBytes = maxAverage;
+
+
 
         return statistics;
     }

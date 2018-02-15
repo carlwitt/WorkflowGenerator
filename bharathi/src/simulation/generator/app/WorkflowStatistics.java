@@ -63,6 +63,10 @@ public class WorkflowStatistics {
     public long minimumPeakMemory = Long.MAX_VALUE;
     /** The largest peak memory consumed by any task, in bytes. */
     public long maximumPeakMemoryBytes = 0L;
+    /** The smallest average memory consumption of any task type, in bytes. */
+    public long smallestAveragePeakMemoryBytes = Long.MAX_VALUE;
+    /** The largest average memory consumption of any task type, in bytes. */
+    public long largestAveragePeakMemoryBytes = 0L;
 
     // per tasktype statistics
     /** For each task type, gives the mean average over the input file size sums. */
@@ -76,6 +80,15 @@ public class WorkflowStatistics {
     /** See {@link #addStatistics(String, WorkflowStatistics)} */
     private static Map<String, WorkflowStatistics> statistics = new LinkedHashMap<>();
 
+//    /** @return the standard deviation of all task's peak memory consumptions */
+//    public double getStdDev(){
+//        memoryUsagesPerTaskType.values().stream()
+//    }
+//    /** @return The standard deviation of peak memory consumptions, where each task is weighted by its runtime. */
+//    public double getWeightedStdDev(){
+//
+//    }
+
     /** Used to assemble and output statistics for a collection of workflows.
      * @param filename name of the file containing the workflow (task resource usage and dependencies in DAX format)
      * @param statistics the descriptive statistics of the workflow in that file
@@ -87,12 +100,12 @@ public class WorkflowStatistics {
     /** Used to write the assembled workflow statistics to a csv file. */
     public static void writeStatisticsCSV(String filename) throws IOException {
         // contains the csv line per workflow file
-        StringBuffer workflowStatisticsCsv = new StringBuffer();
-        workflowStatisticsCsv.append("file,num_tasks,total_runtime_seconds,total_spacetime_megabyteseconds,minimum_peak_memory_mb,maximum_peak_memory_mb\n");
+        StringBuilder workflowStatisticsCsv = new StringBuilder();
+        workflowStatisticsCsv.append("file,num_tasks,total_runtime_seconds,total_spacetime_megabyteseconds,minimum_peak_memory_mb,minimum_average_peak_mb,maximum_peak_memory_mb,maximum_average_peak_mb\n");
 
         for(String workflowFileName : statistics.keySet()){
             WorkflowStatistics s = statistics.get(workflowFileName);
-            workflowStatisticsCsv.append(String.format("%s,%s,%s,%s,%s,%s\n", workflowFileName, s.numberOfTasks, s.totalRuntimeSeconds, s.totalSpacetimeMegabyteSeconds, 1e-6*s.minimumPeakMemory, 1e-6*s.maximumPeakMemoryBytes));
+            workflowStatisticsCsv.append(String.format("%s,%s,%s,%s,%s,%s,%s,%s\n", workflowFileName, s.numberOfTasks, s.totalRuntimeSeconds, s.totalSpacetimeMegabyteSeconds, 1e-6*s.minimumPeakMemory, 1e-6*s.smallestAveragePeakMemoryBytes, 1e-6*s.maximumPeakMemoryBytes, 1e-6*s.largestAveragePeakMemoryBytes));
         }
 
         Files.write(Paths.get(filename), workflowStatisticsCsv.toString().getBytes());
