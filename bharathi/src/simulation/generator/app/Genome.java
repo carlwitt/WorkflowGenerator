@@ -18,7 +18,7 @@ public class Genome extends AbstractApplication {
     public static final String namespace = "Genome";
     private static final int MAX_SEQUENCES = 160;
     private static final int laneFactor = 4;
-    private double runtimeFactor = 1;
+    private double runtimeFactor = 10;
     private String expt;
     private long referenceSize;
     private int[] counts;

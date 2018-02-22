@@ -17,7 +17,7 @@ public class Sipht extends AbstractApplication {
     public static final String CODE = "NC_0025AG05";
     private static final int MEAN_PATSERS = 18;
     private final int PARTNER_FACTOR = 936;
-    private double runtimeFactor = 1.0;
+    private double runtimeFactor = 10.0;
     private int numJobs;
 
     protected void populateDistributions() {

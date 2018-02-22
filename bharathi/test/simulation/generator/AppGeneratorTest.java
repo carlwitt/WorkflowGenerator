@@ -80,7 +80,7 @@ class AppGeneratorTest {
     @Test
     void generateWorkflows() throws Exception {
 
-        Path targetDir = Paths.get("results", "random-memory-models2");
+        Path targetDir = Paths.get("results", "random-memory-models3");
 
         // avoid mixing up commas and dots when converting floating points to string (german vs. english locales)
         Locale.setDefault(new Locale("EN_us")); //Locale.setDefault();//setDefault(new Locale());
@@ -126,7 +126,7 @@ class AppGeneratorTest {
 
                         // random memory model
                         double minFileSize = 10e3;
-                        double maxMemConsumption = 24e9;
+                        double maxMemConsumption = 32e9;
                         double linearTaskChance = 0.5;
                         double minSlope = 0.5;
                         double maxSlope = 2.0;
@@ -139,6 +139,7 @@ class AppGeneratorTest {
 
                             // add memory consumption both as XML element attribute and (as a compatibility hack, as a separate <argument> element)
                             long peakMemoryConsumptionByte = (long) linearModel.getSamples()[1][i];
+
                             tasks[i].addAnnotation("peak_mem_bytes", Long.toString(peakMemoryConsumptionByte));
                             tasks[i].addArgument(new PseudoText(String.format("peak_mem_bytes=%d,peak_memory_relative_time=%.3f", peakMemoryConsumptionByte, 0.5)));
 
@@ -175,7 +176,7 @@ class AppGeneratorTest {
         }
 
         // write summary file that describes all generated workflows (e.g., their number of tasks, memory models, etc.)
-        WorkflowStatistics.writeStatisticsCSV(targetDir.resolve("workflowStatistics-rmm2.csv").toString());
+        WorkflowStatistics.writeStatisticsCSV(targetDir.resolve("workflowStatistics-rmm3.csv").toString());
     }
 
     private static String descriptiveStats(DescriptiveStatistics s){

@@ -22,7 +22,7 @@ public class Cybershake extends AbstractApplication {
     private static final int MIN_INPUTS = 1;
     private static final double EXTRACT_SGT_FACTOR = 0.0081;
 //    public static final double DEFAULT_FACTOR = SeismogramSynthesis.MEAN_RUNTIME;
-    private double runtimeFactor = 1;
+    private double runtimeFactor = 10;
 
     public enum SITE {
         CCP, DLA, FFI, LADT, LBP, PAS, SABD, SBSM, SMCA, USC, WNGC

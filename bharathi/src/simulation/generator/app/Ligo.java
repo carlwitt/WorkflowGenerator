@@ -23,7 +23,7 @@ public class Ligo extends AbstractApplication {
     public static final String namespace = "Ligo";
     private static final double OVERLAP_FACTOR = 1.05;
     private static final int MAX_TRIES = 100;
-    private double runtimeFactor = 1;
+    private double runtimeFactor = 10;
     private int[] topDown;
     private int bnCount;
     private int totalEdges;

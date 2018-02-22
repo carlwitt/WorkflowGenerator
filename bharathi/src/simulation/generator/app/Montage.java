@@ -25,7 +25,7 @@ public class Montage extends AbstractApplication {
     public static Log logger = LogFactory.getLog(Montage.class);
     private final double factor = 4.0;
     private double degree;
-    private double runtimeFactor = 1;
+    private double runtimeFactor = 10;
     private int numProj;
     private int numDiff;
     private static final double DEFAULT_PROBABILITY = 0.05;
