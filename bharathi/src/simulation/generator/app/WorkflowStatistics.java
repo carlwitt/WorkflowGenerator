@@ -68,6 +68,9 @@ public class WorkflowStatistics {
     /** The largest average memory consumption of any task type, in bytes. */
     public long largestAveragePeakMemoryBytes = 0L;
 
+    /** The fraction of wasted spacetime (memory allocation quality) when when assigning all tasks the amount of memory that the largest task in the workflow needs. */
+    public double memoryHeterogeneity;
+
     // per tasktype statistics
     /** For each task type, gives the mean average over the input file size sums. */
     public Map<String, Integer> numberOfTasksPerTaskType = new HashMap<>();

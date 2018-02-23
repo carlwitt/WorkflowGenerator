@@ -171,6 +171,13 @@ public abstract class AbstractApplication implements Application {
 
         }
 
+        // compute memory heterogeneity in a second pass
+//        double oversizingWastage = 0;
+//        iterable = getDAX().iterateJob();
+//        while (iterable.hasNext()) {
+//            totalSpacetimeMegabyteSeconds
+//        }
+
         long minAverage = Long.MAX_VALUE;
         long maxAverage = 0;
 
