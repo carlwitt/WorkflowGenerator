@@ -200,7 +200,7 @@ public abstract class AbstractApplication implements Application {
 
         }
 
-        statistics.memoryHeterogeneity = oversizingWastageMBs / (statistics.totalSpacetimeMegabyteSeconds+oversizingWastageMBs);
+        statistics.memoryHeterogeneity = statistics.totalSpacetimeMegabyteSeconds / (statistics.totalSpacetimeMegabyteSeconds+oversizingWastageMBs);
         statistics.cpuToMemRatio = statistics.totalRuntimeSeconds * 4000. / statistics.totalSpacetimeMegabyteSeconds;
 
         // TODO double check these statistics

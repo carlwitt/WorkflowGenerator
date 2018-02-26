@@ -112,13 +112,16 @@ class AppGeneratorTest {
             for (Integer numTasks : workflowSizes) {
                 for (int instanceID = 0; instanceID < numInstances; instanceID++) {
 
-                    // create a new Ligo/Cybershake/etc. object
-                    AbstractApplication app = appClass.newInstance();
-                    // create the workflow topology and sample the runtimes
-                    app.generateWorkflow("-n", numTasks.toString());
 
                     WorkflowStatistics statistics;
+                    AbstractApplication app;
+
                     do{
+
+                        // create a new Ligo/Cybershake/etc. object
+                        app = appClass.newInstance();
+                        // create the workflow topology and sample the runtimes
+                        app.generateWorkflow("-n", numTasks.toString());
 
                         // generate random memory model for each task type
                         for (String tasktype : app.getTasktypes()) {
