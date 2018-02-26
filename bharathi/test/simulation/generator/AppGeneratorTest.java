@@ -80,7 +80,7 @@ class AppGeneratorTest {
     @Test
     void generateWorkflows() throws Exception {
 
-        Path targetDir = Paths.get("results", "random-memory-models3");
+        Path targetDir = Paths.get("results", "random-memory-models4");
 
         // avoid mixing up commas and dots when converting floating points to string (german vs. english locales)
         Locale.setDefault(new Locale("EN_us")); //Locale.setDefault();//setDefault(new Locale());
@@ -117,43 +117,46 @@ class AppGeneratorTest {
                     // create the workflow topology and sample the runtimes
                     app.generateWorkflow("-n", numTasks.toString());
 
+                    WorkflowStatistics statistics;
+                    do{
 
-                    // generate random memory model for each task type
-                    for(String tasktype : app.getTasktypes()){
+                        // generate random memory model for each task type
+                        for (String tasktype : app.getTasktypes()) {
 
-                        // get tasks of current type
-                        AppJob[] tasks = app.getTasks(tasktype);
+                            // get tasks of current type
+                            AppJob[] tasks = app.getTasks(tasktype);
 
-                        // random memory model
-                        double minFileSize = 10e3;
-                        double maxMemConsumption = 32e9;
-                        double linearTaskChance = 0.5;
-                        double minSlope = 0.5;
-                        double maxSlope = 2.0;
-                        LinearModel linearModel = LinearModel.randomMemoryModel(tasks.length, minFileSize, maxMemConsumption, linearTaskChance, minSlope, maxSlope);
+                            // random memory model
+                            double minFileSize = 10e3;
+                            double maxMemConsumption = 32e9;
+                            double linearTaskChance = 0.5;
+                            double minSlope = 0.5;
+                            double maxSlope = 2.0;
+                            LinearModel linearModel = LinearModel.randomMemoryModel(tasks.length, minFileSize, maxMemConsumption, linearTaskChance, minSlope, maxSlope);
 
-                        app.memoryModels.put(tasktype, linearModel);
+                            app.memoryModels.put(tasktype, linearModel);
 
-                        // annotate tasks of current type
-                        for (int i = 0; i < tasks.length; i++) {
+                            // annotate tasks of current type
+                            for (int i = 0; i < tasks.length; i++) {
 
-                            // add memory consumption both as XML element attribute and (as a compatibility hack, as a separate <argument> element)
-                            long peakMemoryConsumptionByte = (long) linearModel.getSamples()[1][i];
+                                // add memory consumption both as XML element attribute and (as a compatibility hack, as a separate <argument> element)
+                                long peakMemoryConsumptionByte = (long) linearModel.getSamples()[1][i];
 
-                            tasks[i].addAnnotation("peak_mem_bytes", Long.toString(peakMemoryConsumptionByte));
-                            tasks[i].addArgument(new PseudoText(String.format("peak_mem_bytes=%d,peak_memory_relative_time=%.3f", peakMemoryConsumptionByte, 0.5)));
+                                tasks[i].addAnnotation("peak_mem_bytes", Long.toString(peakMemoryConsumptionByte));
+                                tasks[i].addArgument(new PseudoText(String.format("peak_mem_bytes=%d,peak_memory_relative_time=%.3f", peakMemoryConsumptionByte, 0.5)));
 
-                            double[] filesizes = linearModel.getSamples()[0];
-                            if(tasks[i].getInputs().size() == 0) {
-                                System.err.printf("AppGeneratorTest.generateWorkflows: %s (%s.n.%s.%s.dax) has zero input files to distribute input size to%n", tasktype, appClass.getSimpleName(), numTasks, instanceID);
-                                continue;
+                                double[] filesizes = linearModel.getSamples()[0];
+                                if (tasks[i].getInputs().size() == 0) {
+                                    System.err.printf("AppGeneratorTest.generateWorkflows: %s (%s.n.%s.%s.dax) has zero input files to distribute input size to%n", tasktype, appClass.getSimpleName(), numTasks, instanceID);
+                                    continue;
+                                }
+                                long averageInputSize = ((long) filesizes[i]) / tasks[i].getInputs().size();
+                                tasks[i].getInputs().forEach(appFilename -> appFilename.setSize(averageInputSize));
                             }
-                            long averageInputSize = ((long) filesizes[i]) / tasks[i].getInputs().size();
-                            tasks[i].getInputs().forEach(appFilename -> appFilename.setSize(averageInputSize));
                         }
-                    }
 
-                    WorkflowStatistics statistics = app.getStatistics();
+                        statistics = app.getStatistics();
+                    } while (statistics.memoryHeterogeneity >= 0.5);
 
                     // write the workflow to text file (DAX format)
                     String filename = String.format("%s.n.%d.%d.dax", app.getClass().getSimpleName(), statistics.numberOfTasks, instanceID);
@@ -176,7 +179,7 @@ class AppGeneratorTest {
         }
 
         // write summary file that describes all generated workflows (e.g., their number of tasks, memory models, etc.)
-        WorkflowStatistics.writeStatisticsCSV(targetDir.resolve("workflowStatistics-rmm3.csv").toString());
+        WorkflowStatistics.writeStatisticsCSV(targetDir.resolve("workflowStatistics-rmm4.csv").toString());
     }
 
     private static String descriptiveStats(DescriptiveStatistics s){

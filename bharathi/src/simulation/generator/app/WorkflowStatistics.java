@@ -70,7 +70,10 @@ public class WorkflowStatistics {
 
     /** The fraction of wasted spacetime (memory allocation quality) when when assigning all tasks the amount of memory that the largest task in the workflow needs. */
     public double memoryHeterogeneity;
-
+    /** The ratio between a lower bound taking into account only CPU usage and a lower bound considering only memory usage.
+     * The former is {@link #totalRuntimeSeconds}/cores, the latter is {@link #totalSpacetimeMegabyteSeconds}/(cores*memPerCore), which boils down to runtimeSeconds * memCore / spaceTimeSeconds.
+     * As value for memPerCore we use a fixed 4 GB. */
+    public double cpuToMemRatio;
     // per tasktype statistics
     /** For each task type, gives the mean average over the input file size sums. */
     public Map<String, Integer> numberOfTasksPerTaskType = new HashMap<>();
@@ -104,11 +107,11 @@ public class WorkflowStatistics {
     public static void writeStatisticsCSV(String filename) throws IOException {
         // contains the csv line per workflow file
         StringBuilder workflowStatisticsCsv = new StringBuilder();
-        workflowStatisticsCsv.append("file,num_tasks,total_runtime_seconds,total_spacetime_megabyteseconds,minimum_peak_memory_mb,minimum_average_peak_mb,maximum_peak_memory_mb,maximum_average_peak_mb\n");
+        workflowStatisticsCsv.append("file,num_tasks,total_runtime_seconds,total_spacetime_megabyteseconds,minimum_peak_memory_mb,minimum_average_peak_mb,maximum_peak_memory_mb,maximum_average_peak_mb,memory_heterogeneity,cpu_to_mem_ratio_4GB\n");
 
         for(String workflowFileName : statistics.keySet()){
             WorkflowStatistics s = statistics.get(workflowFileName);
-            workflowStatisticsCsv.append(String.format("%s,%s,%s,%s,%s,%s,%s,%s\n", workflowFileName, s.numberOfTasks, s.totalRuntimeSeconds, s.totalSpacetimeMegabyteSeconds, 1e-6*s.minimumPeakMemory, 1e-6*s.smallestAveragePeakMemoryBytes, 1e-6*s.maximumPeakMemoryBytes, 1e-6*s.largestAveragePeakMemoryBytes));
+            workflowStatisticsCsv.append(String.format("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", workflowFileName, s.numberOfTasks, s.totalRuntimeSeconds, s.totalSpacetimeMegabyteSeconds, 1e-6*s.minimumPeakMemory, 1e-6*s.smallestAveragePeakMemoryBytes, 1e-6*s.maximumPeakMemoryBytes, 1e-6*s.largestAveragePeakMemoryBytes, s.memoryHeterogeneity, s.cpuToMemRatio));
         }
 
         Files.write(Paths.get(filename), workflowStatisticsCsv.toString().getBytes());

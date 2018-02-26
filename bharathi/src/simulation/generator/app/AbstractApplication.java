@@ -158,8 +158,8 @@ public abstract class AbstractApplication implements Application {
             // accumulate total task spacetime usage
             long taskMemoryBytes = Long.parseLong(next.getAnnotation("peak_mem_bytes"));
             assert taskMemoryBytes > 0 : String.format("Task peak memory consumption must be > 0, is %d for task %s", taskMemoryBytes, next.getClass().getSimpleName());
-            double taskSpacetimeMegabyteSeconds = 1e-6 * taskMemoryBytes;
-            statistics.totalSpacetimeMegabyteSeconds += taskRuntimeSeconds * taskSpacetimeMegabyteSeconds;
+            double taskMemoryMB = 1e-6 * taskMemoryBytes;
+            statistics.totalSpacetimeMegabyteSeconds += taskRuntimeSeconds * taskMemoryMB;
 
             // per task type statistics
             statistics.memoryUsagesPerTaskType.putIfAbsent(tasktype, new DescriptiveStatistics());
@@ -170,13 +170,6 @@ public abstract class AbstractApplication implements Application {
             statistics.inputSizesPerTaskType.get(tasktype).addValue(sumOfInputs);
 
         }
-
-        // compute memory heterogeneity in a second pass
-//        double oversizingWastage = 0;
-//        iterable = getDAX().iterateJob();
-//        while (iterable.hasNext()) {
-//            totalSpacetimeMegabyteSeconds
-//        }
 
         long minAverage = Long.MAX_VALUE;
         long maxAverage = 0;
@@ -193,6 +186,22 @@ public abstract class AbstractApplication implements Application {
             maxAverage = (long) Math.max(maxAverage, statistics.memoryUsagesPerTaskType.get(tasktype).getMean());
 
         }
+
+        // compute memory heterogeneity in a second pass
+        double oversizingWastageMBs = 0;
+        iterable = getDAX().iterateJob();
+        while (iterable.hasNext()) {
+
+            AppJob next = iterable.next();
+            double taskRuntimeSeconds = Double.parseDouble(next.getAnnotation("runtime"));
+            double taskMemoryWastageMB = 1e-6 * (statistics.maximumPeakMemoryBytes - Long.parseLong(next.getAnnotation("peak_mem_bytes")));
+            assert taskMemoryWastageMB >= 0 : "Negative Wastage";
+            oversizingWastageMBs += taskRuntimeSeconds * taskMemoryWastageMB;
+
+        }
+
+        statistics.memoryHeterogeneity = oversizingWastageMBs / (statistics.totalSpacetimeMegabyteSeconds+oversizingWastageMBs);
+        statistics.cpuToMemRatio = statistics.totalRuntimeSeconds * 4000. / statistics.totalSpacetimeMegabyteSeconds;
 
         // TODO double check these statistics
         statistics.smallestAveragePeakMemoryBytes = minAverage;
