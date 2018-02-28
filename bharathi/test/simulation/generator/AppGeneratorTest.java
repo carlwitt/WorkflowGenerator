@@ -80,7 +80,7 @@ class AppGeneratorTest {
     @Test
     void generateWorkflows() throws Exception {
 
-        Path targetDir = Paths.get("results", "random-memory-models5");
+        Path targetDir = Paths.get("results", "random-memory-models6");
 
         // avoid mixing up commas and dots when converting floating points to string (german vs. english locales)
         Locale.setDefault(new Locale("EN_us")); //Locale.setDefault();//setDefault(new Locale());
@@ -96,14 +96,14 @@ class AppGeneratorTest {
         // tasks per workflow instance
         int[] workflowSizes = {
 //                100,
-                1000,
+                5000,
 //                10000,
         };
 
         // number of workflow instances per configuration (class, num tasks)
         // since each workflow has randomized runtimes, memory consumptions, etc. we want
         // more than one instance per configuration
-        int numInstances = 30;
+        int numInstances = 15;
 
         // create a new workflow for each configuration (workflow type, num tasks, instance id)
         // write the dax output file
@@ -159,7 +159,7 @@ class AppGeneratorTest {
                         }
 
                         statistics = app.getStatistics();
-                    } while (statistics.memoryHeterogeneity >= 0.1);
+                    } while (statistics.memoryHeterogeneity >= 0.3 && statistics.cpuToMemRatio < 0.5);
 
                     // write the workflow to text file (DAX format)
                     String filename = String.format("%s.n.%d.%d.dax", app.getClass().getSimpleName(), statistics.numberOfTasks, instanceID);
@@ -182,7 +182,7 @@ class AppGeneratorTest {
         }
 
         // write summary file that describes all generated workflows (e.g., their number of tasks, memory models, etc.)
-        WorkflowStatistics.writeStatisticsCSV(targetDir.resolve("workflowStatistics-rmm5.csv").toString());
+        WorkflowStatistics.writeStatisticsCSV(targetDir.resolve("workflowStatistics-rmm6.csv").toString());
     }
 
     private static String descriptiveStats(DescriptiveStatistics s){
