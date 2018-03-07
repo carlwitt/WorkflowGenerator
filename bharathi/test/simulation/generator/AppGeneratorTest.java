@@ -171,14 +171,13 @@ class AppGeneratorTest {
                     // add statistics for output in a file that describes the workflows
                     WorkflowStatistics.addStatistics(filename, statistics);
 
-                    System.out.println(app.getClass().getSimpleName());
                     for(String tasktype : app.getTasktypes()){
-                        System.out.printf("tasktype = %s (%s) instances%n", tasktype, statistics.numberOfTasksPerTaskType.get(tasktype));
+                        DescriptiveStatistics memory = statistics.memoryUsagesPerTaskType.get(tasktype);
+                        System.out.printf("%s,%s,%s,%s,%s,%.2f,%.2f %n", app.getClass().getSimpleName(), numTasks, instanceID, tasktype, statistics.numberOfTasksPerTaskType.get(tasktype), memory.getMean()/1e9, memory.getStandardDeviation()/1e9);
 //            System.out.println("numberOfTasksPerTaskType = " + statistics.numberOfTasksPerTaskType.get(tasktype));
 //                        System.out.println("inputSizes = " + descriptiveStats(statistics.inputSizesPerTaskType.get(tasktype)));
 //                        System.out.println("peakMem = " + descriptiveStats(statistics.memoryUsagesPerTaskType.get(tasktype)));
                     }
-                    System.out.println("");
 
                 }
             }
