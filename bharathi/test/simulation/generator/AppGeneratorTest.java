@@ -80,7 +80,7 @@ class AppGeneratorTest {
     @Test
     void generateWorkflows() throws Exception {
 
-        Path targetDir = Paths.get("results", "random-memory-models6");
+        Path targetDir = Paths.get("results", "rmm7");
 
         // avoid mixing up commas and dots when converting floating points to string (german vs. english locales)
         Locale.setDefault(new Locale("EN_us")); //Locale.setDefault();//setDefault(new Locale());
@@ -96,6 +96,7 @@ class AppGeneratorTest {
         // tasks per workflow instance
         int[] workflowSizes = {
 //                100,
+                2500,
                 5000,
 //                10000,
         };
@@ -103,7 +104,7 @@ class AppGeneratorTest {
         // number of workflow instances per configuration (class, num tasks)
         // since each workflow has randomized runtimes, memory consumptions, etc. we want
         // more than one instance per configuration
-        int numInstances = 15;
+        int numInstances = 20;
 
         // create a new workflow for each configuration (workflow type, num tasks, instance id)
         // write the dax output file
@@ -131,7 +132,7 @@ class AppGeneratorTest {
 
                             // random memory model
                             double minFileSize = 10e3;
-                            double maxMemConsumption = 32e9;
+                            double maxMemConsumption = 64e9;
                             double linearTaskChance = 0.5;
                             double minSlope = 0.5;
                             double maxSlope = 2.0;
@@ -170,19 +171,21 @@ class AppGeneratorTest {
                     // add statistics for output in a file that describes the workflows
                     WorkflowStatistics.addStatistics(filename, statistics);
 
-//                    for(String tasktype : app.getTasktypes()){
-//                        System.out.printf("tasktype = %s (%s) instances%n", tasktype, statistics.numberOfTasksPerTaskType.get(tasktype));
+                    System.out.println(app.getClass().getSimpleName());
+                    for(String tasktype : app.getTasktypes()){
+                        System.out.printf("tasktype = %s (%s) instances%n", tasktype, statistics.numberOfTasksPerTaskType.get(tasktype));
 //            System.out.println("numberOfTasksPerTaskType = " + statistics.numberOfTasksPerTaskType.get(tasktype));
 //                        System.out.println("inputSizes = " + descriptiveStats(statistics.inputSizesPerTaskType.get(tasktype)));
 //                        System.out.println("peakMem = " + descriptiveStats(statistics.memoryUsagesPerTaskType.get(tasktype)));
-//                    }
+                    }
+                    System.out.println("");
 
                 }
             }
         }
 
         // write summary file that describes all generated workflows (e.g., their number of tasks, memory models, etc.)
-        WorkflowStatistics.writeStatisticsCSV(targetDir.resolve("workflowStatistics-rmm6.csv").toString());
+        WorkflowStatistics.writeStatisticsCSV(targetDir.resolve("workflowStatistics.csv").toString());
     }
 
     private static String descriptiveStats(DescriptiveStatistics s){
