@@ -47,7 +47,7 @@ import java.util.stream.DoubleStream;
  *
  * Created by Carl Witt on 13.11.17.
  */
-public class LinearModel {
+public class LinearModel extends MemoryModel {
 
     /** The slope of the linear function. */
     private final double slope;
@@ -60,9 +60,7 @@ public class LinearModel {
     /** The smallest number ever returned by this model, for instance to assure drawing positive random numbers. */
     private double minValue = Double.MIN_VALUE;
 
-    /** Pairs of (total file input size, peak memory consumption) generated in {@link #randomMemoryModel(int, double, double, double, double, double)}}.
-     * The samples[0] is the array of input sizes, samples[1] is the array of peak memory usages. */
-    private double[][] samples = new double[2][];
+    private static Random random = new Random();
 
     /**
      * peak mem will be sampled from slope * input size + intercept + random value in range [-err, +err]
@@ -78,31 +76,16 @@ public class LinearModel {
         this.minValue = minValue;
     }
 
-    public static LinearModel constant(double value, double errorStandardDeviation, double minValue){
-        return new LinearModel(0, value, errorStandardDeviation, minValue);
-    }
-
     /**
-     * @return an array of random input sizes and possibly correlated memory consumption, depending on the parameters generated in {@link #randomMemoryModel(int, double, double, double, double, double)}
+     * peak mem = slope * input size + intercept + random value sampled from Normal(0, errorStandardDeviation^2)
+     * @param inputFileSize The size of the input file, usually in bytes.
+     * @return a random value ≥ {@link #minValue} according to the model.
      */
-    public double[][] getSamples(){
-        return samples;
-    }
-
     @Override
-    public String toString() {
-        return String.format("slope=%.2f, err sd=%.2f, mem min=%.2f, mem max=%.2f in MEGA}", slope, errorStandardDeviation/1e6, Arrays.stream(samples[1]).min().orElse(-1)/1e6, Arrays.stream(samples[1]).max().orElse(-1)/1e6);
+    public long generate(long inputFileSize){
+        return (long) Math.max(minValue, inputFileSize*slope + intercept + error.nextGaussian()*errorStandardDeviation);
     }
 
-    private static double uniform(double lower, double upper){
-        return Math.random()*(upper-lower)+lower;
-    }
-
-    private static Random random = new Random();
-
-    private static DoubleStream gaussian(double mu, double sigma){
-        return DoubleStream.generate(random::nextGaussian).map( normal -> sigma * normal + mu);
-    }
 
     /** This was used to generate the random memory models for each task type in Witt et al. 2018.
      * Initializes the {@link #samples} array. */
@@ -166,14 +149,22 @@ public class LinearModel {
 
         return linearModel;
     }
+    public static LinearModel constant(double value, double errorStandardDeviation, double minValue){
+        return new LinearModel(0, value, errorStandardDeviation, minValue);
+    }
 
-    /**
-     * peak mem = slope * input size + intercept + random value sampled from Normal(0, errorStandardDeviation^2)
-     * @param inputFileSize The size of the input file, usually in bytes.
-     * @return a random value ≥ {@link #minValue} according to the model.
-     */
-    public long generate(long inputFileSize){
-        return (long) Math.max(minValue, inputFileSize*slope + intercept + error.nextGaussian()*errorStandardDeviation);
+    private static double uniform(double lower, double upper){
+        return Math.random()*(upper-lower)+lower;
+    }
+
+    private static DoubleStream gaussian(double mu, double sigma){
+        return DoubleStream.generate(random::nextGaussian).map( normal -> sigma * normal + mu);
+    }
+
+
+    @Override
+    public String toString() {
+        return String.format("slope=%.2f, err sd=%.2f, mem min=%.2f, mem max=%.2f in MEGA}", slope, errorStandardDeviation/1e6, Arrays.stream(samples[1]).min().orElse(-1)/1e6, Arrays.stream(samples[1]).max().orElse(-1)/1e6);
     }
 
 
