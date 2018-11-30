@@ -57,7 +57,14 @@ public class GenerateCorpus {
         // for instance the TmpltBank task type has a mean runtime of 20 seconds in the generator vs 500 sec in the publication
         // also, some of the workflow's task types as published do not appear in the simulation
 
-        Path targetDir = Paths.get("results", "rmm10");
+        Path targetDir = Paths.get(args[0]);
+        // doesn't work.
+        if(! targetDir.toFile().exists() && ! targetDir.toFile().mkdir()){
+            System.out.println("Couldn't create dir "+targetDir);
+            System.out.println("targetDir.toFile() = " + targetDir.toFile());
+            System.exit(-1);
+        }
+        System.out.println("Writing workflows to "+targetDir.toAbsolutePath().toString());
 
         // avoid mixing up commas and dots when converting floating points to string (german vs. english locales)
         Locale.setDefault(new Locale("EN_us")); //Locale.setDefault();//setDefault(new Locale());
@@ -108,7 +115,7 @@ public class GenerateCorpus {
 
                         // random memory model
                         double minFileSize = 10e3;
-                        double maxMemConsumption = 1024e9;
+                        double maxMemConsumption = 2000e9;
                         double linearTaskChance = 0.5;
                         double minSlope = 1;
                         double maxSlope = 10.0;
@@ -149,7 +156,7 @@ public class GenerateCorpus {
 
                     for(String tasktype : app.getTasktypes()){
                         DescriptiveStatistics memory = statistics.memoryUsagesPerTaskType.get(tasktype);
-                        System.out.printf("%s,%s,%s,%s,%s,%.2f,%.2f %n", app.getClass().getSimpleName(), workflowSize, instanceID, tasktype, statistics.numberOfTasksPerTaskType.get(tasktype), memory.getMean()/1e9, memory.getStandardDeviation()/1e9);
+                        System.out.printf("%s,%s,%s,%s,%s,µ=%.2f,s=%.2f,peak = %.2f%n", app.getClass().getSimpleName(), workflowSize, instanceID, tasktype, statistics.numberOfTasksPerTaskType.get(tasktype), memory.getMean()/1e9, memory.getStandardDeviation()/1e9,memory.getMax()/1e9);
 //            System.out.println("numberOfTasksPerTaskType = " + statistics.numberOfTasksPerTaskType.get(tasktype));
 //                        System.out.println("inputSizes = " + descriptiveStats(statistics.inputSizesPerTaskType.get(tasktype)));
 //                        System.out.println("peakMem = " + descriptiveStats(statistics.memoryUsagesPerTaskType.get(tasktype)));
