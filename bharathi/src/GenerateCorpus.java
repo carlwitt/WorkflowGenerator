@@ -89,7 +89,7 @@ public class GenerateCorpus {
 
                         // random memory model
                         double minFileSize = 10e3;
-                        double maxMemConsumption = 2000e9;
+                        double maxMemConsumption = 1500e9;
                         double linearTaskChance = 0.5;
                         double minSlope = 1;
                         double maxSlope = 10.0;
@@ -100,7 +100,7 @@ public class GenerateCorpus {
                         // annotate tasks of current type
                         for (int i = 0; i < tasks.length; i++) {
 
-                            // add memory consumption both as XML element attribute and (as a compatibility hack, as a separate <argument> element)
+                            // add memory consumption both as XML element attribute and (as a dax specification compatibility hack, as a separate <argument> element)
                             long peakMemoryConsumptionByte = (long) linearModel.getSamples()[1][i];
 
                             // fixed middle ground between optimistic (0) and pessimistic (1)

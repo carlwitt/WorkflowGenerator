@@ -96,10 +96,10 @@ public class LinearModel extends MemoryModel {
         double minInput = 100e6;
         double maxInput = 1e9;
 
-        // average memory usage between 1GB MB and 1TB
+        // average memory usage between 1GB and 1TB
         double meanY = uniform(1e9, 1000e9);
-        // standard deviation between 3% and 10% of the mean (seems low, but produces realistic feeling models; otherwise we get very large memory ranges)
-        double varY = Math.pow(meanY * uniform(0.03, 0.1), 2.0);
+        // standard deviation between 3% and 10% of the mean (seems small, but produces realistic feeling models; otherwise we get very large memory ranges)
+        double varY = Math.pow(meanY * uniform(0.1, 0.75), 2.0);
         // zero slope in half of the cases, minSlope and maxSlope otherwise
         double slope = Math.random() > linearTaskChance ? 0. : uniform(minSlope, maxSlope);
         double intercept;
@@ -144,7 +144,7 @@ public class LinearModel extends MemoryModel {
         linearModel.samples[1] = gaussian(0, errorStandardDeviation).limit(numSamples).toArray();
         for (int i = 0; i < numSamples; i++) {
             // ... slope * input + intercept
-            linearModel.samples[1][i] = Math.min(maxMemConsumption, slope * linearModel.samples[0][i] + intercept + linearModel.samples[1][i]);
+            linearModel.samples[1][i] = Math.min(maxMemConsumption, Math.max(slope * linearModel.samples[0][i] + intercept + linearModel.samples[1][i], 100e6));
         }
 
         return linearModel;
