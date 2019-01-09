@@ -1,35 +1,6 @@
-/* ******************************************************************************
- * In the Hi-WAY project we propose a novel approach of executing scientific
- * workflows processing Big Data, as found in NGS applications, on distributed
- * computational infrastructures. The Hi-WAY software stack comprises the func-
- * tional workflow language Cuneiform as well as the Hi-WAY ApplicationMaster
- * for Apache Hadoop 2.x (YARN).
+/*
  *
- * List of Contributors:
- *
- * Carl Witt (HU Berlin)
- * Marc Bux (HU Berlin)
- * Jörgen Brandt (HU Berlin)
- * Ulf Leser (HU Berlin)
- *
- * Jörgen Brandt is funded by the European Commission through the BiobankCloud
- * project. Marc Bux is funded by the Deutsche Forschungsgemeinschaft through
- * research training group SOAMED (GRK 1651).
- *
- * Copyright 2014 Humboldt-Universität zu Berlin
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- ******************************************************************************/
+ */
 
 import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
 import org.griphyn.vdl.dax.PseudoText;
@@ -52,6 +23,9 @@ import java.util.Random;
 public class GenerateCorpus {
 
     public static void main(String[] args) throws Exception {
+
+        // scale workflows to this area (Terabyte-Weeks as measured in accumulated runtime times accumulated peak memory usage)
+        double targetTibWeeks = 1.0;
 
         // TODO the distributions of the workflow generator (by Bharathi) do not exactly match the published numbers in Juve 2013 (FGCS)
         // for instance the TmpltBank task type has a mean runtime of 20 seconds in the generator vs 500 sec in the publication
@@ -90,7 +64,7 @@ public class GenerateCorpus {
         // number of workflow instances per configuration (class, num tasks)
         // since each workflow has randomized runtimes, memory consumptions, etc. we want
         // more than one instance per configuration
-        int numInstances = 200;
+        int numInstances = 100;
 
         // create a new workflow for each configuration (workflow type, num tasks, instance id)
         // write the dax output file
@@ -128,8 +102,11 @@ public class GenerateCorpus {
 
                             // add memory consumption both as XML element attribute and (as a compatibility hack, as a separate <argument> element)
                             long peakMemoryConsumptionByte = (long) linearModel.getSamples()[1][i];
+
+                            // fixed middle ground between optimistic (0) and pessimistic (1)
+                            double peakMemoryRelativeTime = 0.5;
                             // normally distributed and capped to range [0, 1]
-                            double peakMemoryRelativeTime = Math.min(1, Math.max(0, random.nextDouble()*0.7+0.3));
+//                            double peakMemoryRelativeTime = Math.min(1, Math.max(0, random.nextDouble()*0.7+0.3));
 
                             tasks[i].addAnnotation("peak_mem_bytes", Long.toString(peakMemoryConsumptionByte));
                             tasks[i].addArgument(new PseudoText(String.format("peak_mem_bytes=%d,peak_memory_relative_time=%.3f", peakMemoryConsumptionByte, peakMemoryRelativeTime)));
@@ -145,26 +122,47 @@ public class GenerateCorpus {
                     }
                     statistics = app.getStatistics();
 
+                    // scale the workflows to a uniform amount of resources
+                    double tibWeeks = statistics.totalSpacetimeMegabyteSeconds / 1024. / 1024. / 3600. / 24. / 7.;
+                    System.out.println("TBw before normalization = " + tibWeeks);
+
+                    double scaleFactor = tibWeeks / targetTibWeeks;
+                    for(String type: app.getTasktypes()){
+                        for(AppJob task: app.getTasks(type)){
+                            double scaledRuntime = Double.parseDouble(task.getAnnotation("runtime")) / scaleFactor;
+                            task.addAnnotation("runtime", String.valueOf(scaledRuntime));
+                        }
+                    }
+
+                    // update app statistics
+                    statistics = app.getStatistics();
+                    double tibWeeks2 = statistics.totalSpacetimeMegabyteSeconds / 1024. / 1024. / 3600. / 24. / 7.;
+                    System.out.println("TBw after normalization = " + tibWeeks2);
+
                     // write the workflow to text file (DAX format)
                     String filename = String.format("%s.n.%d.%d.dax", app.getClass().getSimpleName(), statistics.numberOfTasks, instanceID);
                     FileOutputStream fop = new FileOutputStream(new File(targetDir.resolve(filename).toString()));
                     app.printWorkflow(fop);
                     fop.close();
 
-                    // add statistics for output in a file that describes the workflows
+                    // add this workflow's statistics to the corpus currently being generated for later writing a file that describes all workflows
                     WorkflowStatistics.addStatistics(filename, statistics);
 
-                    for(String tasktype : app.getTasktypes()){
+                    for(String tasktype : app.getTasktypes()) {
                         DescriptiveStatistics memory = statistics.memoryUsagesPerTaskType.get(tasktype);
-                        System.out.printf("%s,%s,%s,%s,%s,µ=%.2f,s=%.2f,peak = %.2f%n", app.getClass().getSimpleName(), workflowSize, instanceID, tasktype, statistics.numberOfTasksPerTaskType.get(tasktype), memory.getMean()/1e9, memory.getStandardDeviation()/1e9,memory.getMax()/1e9);
+                        System.out.printf("%s,%s,%s,%s,%s,µ=%.2f,s=%.2f,peak = %.2f%n", app.getClass().getSimpleName(), workflowSize, instanceID, tasktype, statistics.numberOfTasksPerTaskType.get(tasktype), memory.getMean() / 1e9, memory.getStandardDeviation() / 1e9, memory.getMax() / 1e9);
 //            System.out.println("numberOfTasksPerTaskType = " + statistics.numberOfTasksPerTaskType.get(tasktype));
 //                        System.out.println("inputSizes = " + descriptiveStats(statistics.inputSizesPerTaskType.get(tasktype)));
 //                        System.out.println("peakMem = " + descriptiveStats(statistics.memoryUsagesPerTaskType.get(tasktype)));
-                    }
+                    } //task type info
 
-                }
-            }
-        }
+                } //instance
+
+
+
+            } // workflow size
+
+        } // workflow type
 
         // write summary file that describes all generated workflows (e.g., their number of tasks, memory models, etc.)
         WorkflowStatistics.writeStatisticsCSV(targetDir.resolve("workflowStatistics.csv").toString());
