@@ -89,10 +89,10 @@ public class GenerateCorpus {
 
                         // random memory model
                         double minFileSize = 10e3;
-                        double maxMemConsumption = 1500e9;
+                        double maxMemConsumption = 1.5e12;
                         double linearTaskChance = 0.5;
-                        double minSlope = 1;
-                        double maxSlope = 10.0;
+                        double minSlope = 0.2;
+                        double maxSlope = 2;
                         LinearModel linearModel = LinearModel.randomMemoryModel(tasks.length, minFileSize, maxMemConsumption, linearTaskChance, minSlope, maxSlope);
 
                         app.memoryModels.put(tasktype, linearModel);

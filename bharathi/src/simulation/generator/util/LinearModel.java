@@ -91,15 +91,12 @@ public class LinearModel extends MemoryModel {
      * Initializes the {@link #samples} array. */
     public static LinearModel randomMemoryModel(int numSamples, double minFileSize, double maxMemConsumption, double linearTaskChance, double minSlope, double maxSlope){
 
-        // input range orientation between 100MB and 1GB (actual input sizes vary beyond these limits), but
-        // this brings the input sizes into a good range
-        double minInput = 100e6;
-        double maxInput = 1e9;
-
         // average memory usage between 1GB and 1TB
-        double meanY = uniform(1e9, 1000e9);
+        double meanY = uniform(1e9, 500e9);
+//        System.out.println("meanY = " + meanY);
         // standard deviation between 3% and 10% of the mean (seems small, but produces realistic feeling models; otherwise we get very large memory ranges)
-        double varY = Math.pow(meanY * uniform(0.1, 0.75), 2.0);
+        double varY = Math.pow(meanY * uniform(0.1, 0.5), 2.0);
+
         // zero slope in half of the cases, minSlope and maxSlope otherwise
         double slope = Math.random() > linearTaskChance ? 0. : uniform(minSlope, maxSlope);
         double intercept;
@@ -109,46 +106,57 @@ public class LinearModel extends MemoryModel {
         DoubleStream sampleX;
 
         if (slope < 1e-6) {
+            // input range orientation between 100MB and 1GB (actual input sizes vary beyond these limits), but
+            // this brings the input sizes into a good range
+            double minInput = 100e6;
+            double maxInput = 200e6;
+
             // since the input size has no effect on the output, it can be anything
             intercept = meanY;
             // all of the variance is caused by errors (i.e., is unexplained, since input size is the only explanatory factor we consider)
             errorStandardDeviation = Math.sqrt(varY);
+
             sampleX = gaussian((minInput+maxInput)/2.0, (maxInput-minInput)/3.0);
+
         } else {
-            intercept = 0; // for simplicity, could also go for something like mu - (minInput + maxInput) / 2.;
+            intercept = 0;
 
             // the linearity determines the amount of output variable variance explained by the input (is related but not the same as correlation)
             double linearity = uniform(0.25, 0.75);
 
-            // the amount of variance explained by input
-            double varYByInput = linearity * varY;
-            // the unexplained amount of variance
-            double varYUnexplained = (1.-linearity) * varY;
+            double meanX = (meanY-intercept) / slope ; // since E[mX+n] = m*E[X] + n
 
             // the variance of the input distribution depends on the variance of the output (more specifically, the variance explained by input)
-            double varX = varYByInput/Math.pow(slope, 2.0); // since Var[mX] = m^2 Var[X]
+            double varX = linearity * varY / Math.pow(slope, 2.0); // since Var[mX] = m^2 Var[X]
 
-            double meanX = meanY / slope - intercept; // since E[mX+n] = m*E[X] + n
-
-            errorStandardDeviation = Math.sqrt(varYUnexplained);
+            errorStandardDeviation = Math.sqrt((1.-linearity) * varY);
 
             sampleX = gaussian(meanX, Math.sqrt(varX));
 
         }
+
+        // construct linear model
+        // set parameters
         LinearModel linearModel = new LinearModel(slope, intercept, errorStandardDeviation, 30e6);
 
-        // generate samples
-        linearModel.samples[0] = sampleX.map( d -> Math.max(minFileSize, Math.abs(d)) ).limit(numSamples).toArray();
+        // generate input sizes
+        // clip input sizes
+        linearModel.samples[0] = sampleX.limit(numSamples).map( d -> Math.max(minFileSize, Math.abs(d)) ).toArray();
 
+        // generate memory consumption
+        // if slope = 0, we have independence
+
+        // generate noise
         // y = error + ...
         linearModel.samples[1] = gaussian(0, errorStandardDeviation).limit(numSamples).toArray();
         for (int i = 0; i < numSamples; i++) {
             // ... slope * input + intercept
-            linearModel.samples[1][i] = Math.min(maxMemConsumption, Math.max(slope * linearModel.samples[0][i] + intercept + linearModel.samples[1][i], 100e6));
+            linearModel.samples[1][i] += slope * linearModel.samples[0][i] + intercept;
+            linearModel.samples[1][i] = Math.min(maxMemConsumption, Math.max(linearModel.samples[1][i], 10e6));
         }
-
         return linearModel;
     }
+
     public static LinearModel constant(double value, double errorStandardDeviation, double minValue){
         return new LinearModel(0, value, errorStandardDeviation, minValue);
     }

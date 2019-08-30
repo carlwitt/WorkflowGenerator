@@ -1,5 +1,6 @@
 package simulation.generator.util;
 
+import org.apache.commons.math.stat.descriptive.SummaryStatistics;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -16,7 +17,14 @@ class LinearModelTest {
     void randomModel(){
         LinearModel linearModel = LinearModel.randomMemoryModel(1000, 100e3, 24e9, 0.5, 0.5, 2.0);
         System.out.println("linearModel = " + linearModel);
-        System.out.println("linearModel.getSamples() = " + Arrays.deepToString(linearModel.getSamples()));
+        double[][] samples = linearModel.getSamples();
+        SummaryStatistics sstats = new SummaryStatistics();
+        for(Double mem: samples[1]){
+            sstats.addValue(mem);
+        }
+        System.out.println("sstats.getMean() = " + sstats.getMean());
+        System.out.println("sstats.getStandardDeviation() = " + sstats.getStandardDeviation());
+//        System.out.println("linearModel.getSamples() = " + Arrays.deepToString(linearModel.getSamples()));
     }
 
     @Test
